@@ -1,0 +1,135 @@
+// 1. Cấu hình kết nối
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ĐỊNH NGHĨA MODELS (BẢNG) ---
+
+// 2. Bảng Người dùng (User)
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  fullName String
+  avatar   String?
+  role     Role    @default(STUDENT)
+
+  // Quan hệ ngược (Back-relation)
+  ownedProjects    Project[]      @relation("StudentProjects")
+  mentoredProjects Project[]      @relation("MentorProjects")
+  notifications    Notification[]
+
+  // MỚI THÊM: User (thường là Admin) viết bài đăng
+  posts Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 3. Bảng Đề tài (Core System)
+model Project {
+  id          Int           @id @default(autoincrement())
+  name        String
+  topic       String?
+  description String?       @db.Text
+  status      ProjectStatus @default(PENDING)
+
+  progress Int     @default(0)
+  score    Float?
+  feedback String? @db.Text
+
+  reportUrl String?
+  slideUrl  String?
+
+  studentId Int
+  student   User @relation("StudentProjects", fields: [studentId], references: [id])
+
+  mentorId Int?
+  mentor   User? @relation("MentorProjects", fields: [mentorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- MỚI THÊM: CMS MODULE (TIN TỨC & HƯỚNG DẪN) ---
+
+// 4. Bảng Bài viết (Dùng cho Tin tức, Hướng dẫn NCKH)
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?  @db.Text // Nội dung bài viết (HTML hoặc Text dài)
+  thumbnail String? // Ảnh bìa bài viết
+  type      PostType @default(NEWS) // Phân loại: Tin tức hay Hướng dẫn
+
+  // Ai là người đăng? (Thường là Admin hoặc GV)
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 5. Bảng Tài nguyên (Giữ nguyên - Dùng cho Kho tài liệu)
+model Resource {
+  id        Int          @id @default(autoincrement())
+  title     String
+  fileUrl   String
+  type      ResourceType
+  createdAt DateTime     @default(now())
+}
+
+// 6. Bảng Sự kiện (Giữ nguyên - Dùng cho Timeline)
+model Event {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  isImportant Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+// 7. Bảng Thông báo
+model Notification {
+  id      Int     @id @default(autoincrement())
+  content String
+  isRead  Boolean @default(false)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// --- ENUMS ---
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum ProjectStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum ResourceType {
+  TEMPLATE
+  GUIDE
+  VIDEO
+}
+
+// MỚI THÊM: Phân loại bài viết
+enum PostType {
+  NEWS // Tin tức chung 
+  GUIDE // Bài viết hướng dẫn NCKH 
+  ANNOUNCEMENT // Thông báo quan trọng [cite: 8]
+}
