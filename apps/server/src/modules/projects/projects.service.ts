@@ -10,69 +10,95 @@ import { AssignMentorDto } from './dto/assign-mentor.dto';
 export class ProjectsService {
     constructor(private prisma: PrismaService) { }
 
-    // 1. Sinh viên đăng ký đề tài mới
+    // 1. SINH VIÊN: Đăng ký đề tài mới
     async create(userId: number, dto: CreateProjectDto) {
-        const existingProject = await this.prisma.project.findFirst({
+        // Kiểm tra xem sinh viên có đề tài nào đang dở dang không
+        const activeProject = await this.prisma.project.findFirst({
             where: {
                 studentId: userId,
                 status: {
-                    in: [ProjectStatus.PENDING, ProjectStatus.APPROVED]
+                    in: [ProjectStatus.PENDING, ProjectStatus.APPROVED, ProjectStatus.IN_PROGRESS]
                 }
             }
         });
-        if (existingProject) {
-            throw new BadRequestException('Bạn đang có một đề tài chưa hoàn thành. Không thể đăng ký thêm.');
+
+        if (activeProject) {
+            throw new BadRequestException('Bạn đang có một đề tài đang thực hiện. Vui lòng hoàn thành trước khi đăng ký mới.');
         }
 
         return this.prisma.project.create({
             data: {
-                ...dto,
-                studentId: userId,
+                name: dto.name,
+                description: dto.description,
                 status: ProjectStatus.PENDING,
-                progress: 0
+                progress: 0,
+                student: { connect: { id: userId } },
+                topic: { connect: { id: dto.topicId } },
+                // mentorId có thể null nếu sinh viên chưa chọn
+                mentor: dto.mentorId ? { connect: { id: dto.mentorId } } : undefined
             },
+            include: {
+                topic: true,
+                mentor: { select: { fullName: true } }
+            }
         });
     }
 
-    // 2. Xem danh sách đề tài
-    async findAll(userRole: Role, userId: number) {
-        if (userRole === Role.STUDENT) {
-            return this.prisma.project.findMany({
-                where: { studentId: userId },
-                include: { mentor: { select: { fullName: true } } },
-                orderBy: { createdAt: 'desc' }
-            });
-        }
-
+    // 2. ADMIN: Lấy tất cả đề tài (Dùng cho AdminProjectManagement)
+    async findAllForAdmin() {
         return this.prisma.project.findMany({
             include: {
-                student: { select: { fullName: true, email: true } },
-                mentor: { select: { fullName: true } }
+                student: { select: { id: true, fullName: true, email: true } },
+                mentor: { select: { id: true, fullName: true, email: true, avatar: true } },
+                topic: { select: { id: true, name: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
     }
 
-    // 3. Giảng viên duyệt/chấm điểm
+    // 3. CHUNG: Xem danh sách đề tài (Phân quyền theo Role)
+    async findAll(role: string, userId: number) {
+        if (role === Role.ADMIN) {
+            return this.findAllForAdmin();
+        }
+
+        if (role === Role.LECTURER) {
+            return this.findByMentor(userId);
+        }
+
+        // Sinh viên: Chỉ xem đề tài của chính mình
+        return this.prisma.project.findMany({
+            where: { studentId: userId },
+            include: { mentor: true, topic: true }
+        });
+    }
+
+    // 4. CHUNG: Xem chi tiết 1 đề tài (Trang Timeline/Chi tiết)
+    async findOne(id: number) {
+        const project = await this.prisma.project.findUnique({
+            where: { id: id },
+            include: {
+                student: { select: { fullName: true, email: true, id: true } },
+                mentor: { select: { id: true, fullName: true, email: true, avatar: true } },
+                topic: { select: { id: true, name: true } },
+                progressLogs: {
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
+        });
+
+        if (!project) throw new NotFoundException('Không tìm thấy đề tài');
+        return project;
+    }
+
+    // 5. GIẢNG VIÊN: Duyệt đề tài hoặc Chấm điểm kết thúc
     async updateStatus(id: number, dto: UpdateProjectStatusDto) {
-        // SỬA LỖI 1: Khai báo rõ kiểu dữ liệu là number hoặc undefined
         let newProgress: number | undefined = undefined;
 
-        // Logic 1: Nếu duyệt bắt đầu -> 10%
-        if (dto.status === ProjectStatus.APPROVED) {
-            newProgress = 10;
-        }
-
-        // Logic 2: Nếu chấm điểm Hoàn thành -> 100%
-        if (dto.status === ProjectStatus.COMPLETED) {
-            newProgress = 100;
-        }
-
-        // Logic 3: Nếu bị từ chối -> 0%
-        // SỬA LỖI 2: Xóa CANCELED vì trong Database không có
-        if (dto.status === ProjectStatus.REJECTED) {
-            newProgress = 0;
-        }
+        // Cập nhật tiến độ dựa trên trạng thái mới
+        if (dto.status === ProjectStatus.APPROVED) newProgress = 10;
+        if (dto.status === ProjectStatus.COMPLETED) newProgress = 100;
+        if (dto.status === ProjectStatus.REJECTED) newProgress = 0;
 
         return this.prisma.project.update({
             where: { id: id },
@@ -80,7 +106,7 @@ export class ProjectsService {
                 status: dto.status,
                 feedback: dto.feedback,
                 score: dto.score,
-                progress: newProgress,
+                progress: newProgress ?? undefined,
             },
             include: {
                 student: { select: { email: true, fullName: true } }
@@ -88,92 +114,130 @@ export class ProjectsService {
         });
     }
 
-    // 4. Sinh viên nộp báo cáo (Cập nhật link)
-    async update(projectId: number, userId: number, dto: UpdateProjectDto) {
-        const project = await this.prisma.project.findUnique({
-            where: { id: projectId }
-        });
-
-        if (!project) {
-            throw new NotFoundException('Không tìm thấy đề tài này');
-        }
-
-        if (project.studentId !== userId) {
-            throw new ForbiddenException('Bạn không có quyền chỉnh sửa đề tài của người khác');
-        }
-
-        return this.prisma.project.update({
-            where: { id: projectId },
-            data: {
-                reportUrl: dto.reportUrl,
-                slideUrl: dto.slideUrl,
-                progress: (dto.reportUrl && dto.slideUrl) ? 80 : undefined
-            }
-        });
-    }
-
-    // 5. Xem chi tiết 1 đề tài
-    async findOne(id: number) {
-        const project = await this.prisma.project.findUnique({
-            where: { id: id },
-            include: {
-                student: { select: { fullName: true, email: true } },
-                mentor: { select: { fullName: true } }
-            }
-        });
-
-        if (!project) {
-            throw new NotFoundException('Không tìm thấy đề tài');
-        }
-        return project;
-    }
-    // 6. Phân công Giảng viên hướng dẫn (ADMIN dùng)
+    // 6. ADMIN: Phân công lại Giảng viên
     async assignMentor(projectId: number, dto: AssignMentorDto) {
-        // 1. Kiểm tra đề tài có tồn tại không
-        const project = await this.prisma.project.findUnique({
-            where: { id: projectId }
-        });
-        if (!project) {
-            throw new NotFoundException('Không tìm thấy đề tài');
-        }
-
-        // 2. Kiểm tra Giảng viên có tồn tại và đúng là LECTURER không
-        const mentor = await this.prisma.user.findUnique({
-            where: { id: dto.mentorId }
-        });
-
-        if (!mentor) {
-            throw new NotFoundException('Không tìm thấy giảng viên này');
-        }
-
-        if (mentor.role !== Role.LECTURER) {
-            throw new BadRequestException('Người được phân công không phải là Giảng viên (LECTURER)');
-        }
-
-        // 3. Cập nhật vào Database
         return this.prisma.project.update({
             where: { id: projectId },
-            data: {
-                mentorId: dto.mentorId
-            },
+            data: { mentorId: dto.mentorId },
             include: {
-                mentor: { select: { fullName: true, email: true } }, // Trả về thông tin GV vừa gán
+                mentor: { select: { fullName: true, email: true } },
                 student: { select: { fullName: true } }
             }
         });
     }
-    // 7. Xem danh sách đề tài do mình hướng dẫn (Dành cho GV)
+
+    // 7. SINH VIÊN: Chỉnh sửa thông tin (Khi PENDING)
+    async updateInfo(projectId: number, userId: number, dto: any) {
+        const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+
+        if (!project) throw new NotFoundException('Không tìm thấy đề tài');
+        if (project.studentId !== userId) throw new ForbiddenException('Không có quyền');
+        if (project.status !== ProjectStatus.PENDING) {
+            throw new BadRequestException('Chỉ có thể sửa khi đề tài đang chờ duyệt');
+        }
+
+        return this.prisma.project.update({
+            where: { id: projectId },
+            data: {
+                name: dto.name,
+                description: dto.description,
+                topic: { connect: { id: dto.topicId } },
+                mentor: dto.mentorId ? { connect: { id: dto.mentorId } } : { disconnect: true }
+            }
+        });
+    }
+
+    // 8. SINH VIÊN: Thêm nhật ký tiến độ hàng tuần
+    async addProgress(projectId: number, data: any) {
+        const percentValue = parseInt(data.percent);
+
+        // 1. Cập nhật tiến độ tổng của đề tài
+        await this.prisma.project.update({
+            where: { id: projectId },
+            data: { progress: percentValue }
+        });
+
+        // 2. Lưu nhật ký tiến độ vào bảng ProjectProgress
+        return this.prisma.projectProgress.create({
+            data: {
+                projectId: projectId,
+                title: data.title,
+                content: data.content,
+                percent: percentValue,
+                fileUrl: data.fileUrl,
+                fileName: data.fileName
+            }
+        });
+    }
+
+    // 9. GIẢNG VIÊN: Phản hồi báo cáo tiến độ
+    async addProgressFeedback(progressId: number, feedback: string) {
+        return this.prisma.projectProgress.update({
+            where: { id: progressId },
+            data: { feedback }
+        });
+    }
+
+    // 10. GIẢNG VIÊN: Xem đề tài mình phụ trách
     async findByMentor(mentorId: number) {
         return this.prisma.project.findMany({
-            where: {
-                mentorId: mentorId // Lọc theo ID giảng viên
-            },
+            where: { mentorId: mentorId },
             include: {
-                student: { // Lấy kèm thông tin sinh viên để GV biết ai với ai
-                    select: { id: true, fullName: true, email: true, avatar: true }
-                }
+                student: { select: { id: true, fullName: true, email: true, avatar: true } },
+                topic: { select: { name: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
+    }
+
+    // 11. CÔNG KHAI: Thống kê và danh sách trang chủ
+    async getPublicStats() {
+        const [totalProjects, totalLecturers, completedProjects, totalTopics] = await Promise.all([
+            this.prisma.project.count(),
+            this.prisma.user.count({ where: { role: 'LECTURER' } }),
+            this.prisma.project.count({ where: { status: 'COMPLETED' } }),
+            this.prisma.topic.count(),
+        ]);
+        return { totalProjects, totalLecturers, completedProjects, totalTopics };
+    }
+
+    async findAllPublic() {
+        return this.prisma.project.findMany({
+            where: { status: { in: ['APPROVED', 'IN_PROGRESS', 'COMPLETED'] } },
+            select: {
+                id: true,
+                name: true,
+                status: true,
+                progress: true,
+                createdAt: true,
+                topic: { select: { name: true } },
+                mentor: { select: { fullName: true } }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 6
+        });
+    }
+
+    // 12. TIỆN ÍCH: Lấy danh mục cho Frontend
+    async getTopics() {
+        return this.prisma.topic.findMany({ orderBy: { name: 'asc' } });
+    }
+
+    async getLecturers() {
+        return this.prisma.user.findMany({
+            where: { role: Role.LECTURER, isActive: true },
+            select: { id: true, fullName: true, email: true, avatar: true },
+            orderBy: { fullName: 'asc' }
+        });
+    }
+
+    async remove(projectId: number, userId: number) {
+        const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+        if (!project) throw new NotFoundException('Không tìm thấy đề tài');
+        if (project.studentId !== userId) throw new ForbiddenException('Không có quyền');
+        if (project.status !== ProjectStatus.PENDING) {
+            throw new BadRequestException('Không thể xóa đề tài đã được duyệt');
+        }
+        return this.prisma.project.delete({ where: { id: projectId } });
     }
 }

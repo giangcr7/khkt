@@ -1,16 +1,20 @@
-import { IsEnum, IsNotEmpty, IsString, IsUrl } from 'class-validator';
 import { ResourceType } from '@prisma/client';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateResourceDto {
-    @IsNotEmpty()
     @IsString()
+    @IsNotEmpty()
     title: string;
 
-    @IsNotEmpty()
-    @IsUrl({}, { message: 'Link tài liệu phải là URL hợp lệ' })
-    fileUrl: string; // Link Google Drive hoặc link file
-
-    @IsNotEmpty()
     @IsEnum(ResourceType)
-    type: ResourceType; // TEMPLATE (Biểu mẫu), GUIDE (Hướng dẫn), VIDEO
+    @IsNotEmpty()
+    type: ResourceType;
+
+    @IsString()
+    @IsNotEmpty()
+    fileUrl: string;
+
+    @IsString()
+    @IsOptional() // Cho phép để trống
+    description?: string;
 }

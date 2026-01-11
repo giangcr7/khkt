@@ -1,16 +1,19 @@
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateProjectDto {
-    // Validate: Tên đề tài bắt buộc phải có
-    @IsNotEmpty({ message: 'Tên đề tài không được để trống' })
+    @IsString()
+    @IsNotEmpty()
     name: string;
 
-    // Validate: Lĩnh vực nghiên cứu bắt buộc (CNTT, Kinh tế, Cơ khí...)
-    @IsNotEmpty({ message: 'Lĩnh vực nghiên cứu là bắt buộc' })
-    topic: string;
+    @IsNumber()
+    @IsNotEmpty()
+    topicId: number;
 
-    // Validate: Mô tả có thể để trống (Optional)
-    @IsOptional()
+    @IsNumber()
+    @IsOptional() // Có thể để Optional nếu cho phép SV không chọn trước
+    mentorId?: number;
+
     @IsString()
+    @IsOptional()
     description?: string;
 }

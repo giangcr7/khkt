@@ -1,9 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common'; // <--- Thêm ForbiddenException
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
-import { Role } from '@prisma/client'; // <--- 1. BỔ SUNG IMPORT NÀY
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -12,42 +12,57 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    // 1. Kiểm tra User
+    // 1. Kiểm tra User (Đăng nhập)
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.usersService.findOneByEmail(email);
-        if (user && (await bcrypt.compare(pass, user.password))) {
-            const { password, ...result } = user;
-            return result;
+
+        if (user) {
+            // --- CẬP NHẬT: Kiểm tra trạng thái khóa ---
+            if (!user.isActive) {
+                throw new ForbiddenException('Tài khoản đã bị khóa. Vui lòng liên hệ Admin!');
+            }
+            // ------------------------------------------
+
+            // Kiểm tra mật khẩu
+            if (await bcrypt.compare(pass, user.password)) {
+                const { password, ...result } = user;
+                return result;
+            }
         }
         return null;
     }
 
     // 2. Đăng nhập
     async login(user: any) {
-        // Payload chứa thông tin quan trọng để phân quyền sau này
         const payload = { email: user.email, sub: user.id, role: user.role };
+
         return {
-            access_token: this.jwtService.sign(payload),
+            accessToken: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+                avatar: user.avatar // Trả thêm avatar nếu có
+            }
         };
     }
 
-    // 3. Đăng ký (Đã vá lỗi bảo mật)
     async register(dto: RegisterDto) {
         const existingUser = await this.usersService.findOneByEmail(dto.email);
         if (existingUser) {
             throw new BadRequestException('Email này đã được sử dụng');
         }
 
-        const hashedPassword = await bcrypt.hash(dto.password, 10);
-
+        // KHÔNG HASH mật khẩu ở đây nữa
+        // Truyền thẳng password thô sang UsersService
         const newUser = await this.usersService.create({
             email: dto.email,
-            password: hashedPassword,
+            password: dto.password, // Để UsersService.create xử lý hash
             fullName: dto.fullName,
-            role: Role.STUDENT // <--- 2. SỬA LẠI: Dùng Enum 'Role' viết hoa
+            role: Role.STUDENT
         });
 
-        const { password, ...result } = newUser;
-        return result;
+        return newUser;
     }
 }

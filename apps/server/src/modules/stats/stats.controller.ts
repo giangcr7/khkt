@@ -1,14 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { StatsService } from './stats.service';
-import { ApiTags } from '@nestjs/swagger'; // Import
-@ApiTags('stats')
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
+import { ApiTags } from '@nestjs/swagger';
+
+@ApiTags('Stats')
 @Controller('stats')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class StatsController {
   constructor(private readonly statsService: StatsService) { }
 
-  // API: Lấy số liệu thống kê cho Dashboard/Trang chủ
-  // GET http://localhost:3000/stats/dashboard
   @Get('dashboard')
+  @Roles(Role.ADMIN) // Chỉ Admin mới xem được thống kê
   getDashboardStats() {
     return this.statsService.getDashboardStats();
   }
