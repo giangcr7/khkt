@@ -1,0 +1,102 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// Layouts
+import StudentLayout from './layouts/StudentLayout';
+import LecturerLayout from './layouts/LecturerLayout';
+import AdminLayout from './layouts/AdminLayout';
+
+// Components
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/Shared/ProtectedRoute';
+
+// Public Pages
+import HomePage from './pages/Home/HomePage';
+import LoginPage from './pages/Auth/Login';
+import PostDetail from './pages/Home/PostDetail';
+import ResourcesPage from './pages/Student/Resources';
+import TimelinePage from './pages/Timeline/TimelinePage';
+import GuidePage from './pages/Guide/GuidePage';
+import FAQPage from './pages/FAQ/FAQPage';
+
+// Student Pages
+import StudentDashboard from './pages/Student/Dashboard';
+import MyProjectPage from './pages/Student/MyProject';
+
+// Lecturer Pages
+import LecturerDashboard from './pages/Lecturer/LecturerDashboard';
+import ManageProjects from './pages/Lecturer/ManageProjects';
+
+// Admin Pages
+import AdminDashboard from './pages/Admin/Dashboard';
+import AdminGuideManager from './pages/Admin/GuideManager';
+import AdminProjectManagement from './pages/Admin/ProjectManagement';
+import ManageEvents from './pages/Admin/ManageEvents';
+import ManageFAQ from './pages/Admin/ManageFAQ';
+import ManageNews from './pages/Admin/ManageNews';
+import ManageResources from './pages/Admin/ManageResources';
+import ManageTopics from './pages/Admin/ManageTopics';
+import UserManagement from './pages/Admin/UserManagement';
+
+function App() {
+  return (
+    <BrowserRouter>
+      {/* Navbar luôn hiển thị ở trên cùng */}
+      <Navbar />
+
+      <Routes>
+        {/* ========================================================== */}
+        {/* PUBLIC ROUTES: Bất kỳ ai cũng có thể truy cập */}
+        {/* ========================================================== */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/timeline" element={<TimelinePage />} />
+        <Route path="/guide" element={<GuidePage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/post/:id" element={<PostDetail />} />
+
+        {/* ========================================================== */}
+        {/* PROTECTED ROUTES: Phải đăng nhập & đúng quyền hạn */}
+        {/* ========================================================== */}
+
+        {/* PHÂN HỆ SINH VIÊN */}
+        <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+          <Route path="/student" element={<StudentLayout />}>
+            <Route index element={<StudentDashboard />} />
+            <Route path="my-project" element={<MyProjectPage />} />
+            <Route path="resources" element={<ResourcesPage />} />
+            <Route path="notifications" element={<h2>Thông báo</h2>} />
+          </Route>
+        </Route>
+
+        {/* PHÂN HỆ GIẢNG VIÊN */}
+        <Route element={<ProtectedRoute allowedRoles={['LECTURER']} />}>
+          <Route path="/lecturer" element={<LecturerLayout />}>
+            <Route index element={<LecturerDashboard />} />
+            <Route path="manage-projects" element={<ManageProjects />} />
+          </Route>
+        </Route>
+
+        {/* PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN) */}
+        <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="manage-guide" element={<AdminGuideManager />} />
+            <Route path="manage-projects" element={<AdminProjectManagement />} />
+            <Route path="manage-events" element={<ManageEvents />} />
+            <Route path="manage-faq" element={<ManageFAQ />} />
+            <Route path="manage-news" element={<ManageNews />} />
+            <Route path="manage-resources" element={<ManageResources />} />
+            <Route path="manage-topics" element={<ManageTopics />} />
+            <Route path="user-management" element={<UserManagement />} />
+          </Route>
+        </Route>
+
+        {/* Redirect nếu sai đường dẫn về trang chủ */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
