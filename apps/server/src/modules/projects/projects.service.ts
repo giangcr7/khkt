@@ -5,14 +5,17 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AssignMentorDto } from './dto/assign-mentor.dto';
+import { NotificationsService } from '../notifications/notifications.service'; // Đảm bảo đúng đường dẫn
 
 @Injectable()
 export class ProjectsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService // Inject NotificationsService
+    ) { }
 
     // 1. SINH VIÊN: Đăng ký đề tài mới
     async create(userId: number, dto: CreateProjectDto) {
-        // Kiểm tra xem sinh viên có đề tài nào đang dở dang không
         const activeProject = await this.prisma.project.findFirst({
             where: {
                 studentId: userId,
@@ -34,7 +37,6 @@ export class ProjectsService {
                 progress: 0,
                 student: { connect: { id: userId } },
                 topic: { connect: { id: dto.topicId } },
-                // mentorId có thể null nếu sinh viên chưa chọn
                 mentor: dto.mentorId ? { connect: { id: dto.mentorId } } : undefined
             },
             include: {
@@ -44,7 +46,7 @@ export class ProjectsService {
         });
     }
 
-    // 2. ADMIN: Lấy tất cả đề tài (Dùng cho AdminProjectManagement)
+    // 2. ADMIN: Lấy tất cả đề tài
     async findAllForAdmin() {
         return this.prisma.project.findMany({
             include: {
@@ -56,24 +58,18 @@ export class ProjectsService {
         });
     }
 
-    // 3. CHUNG: Xem danh sách đề tài (Phân quyền theo Role)
+    // 3. CHUNG: Xem danh sách đề tài theo Role
     async findAll(role: string, userId: number) {
-        if (role === Role.ADMIN) {
-            return this.findAllForAdmin();
-        }
+        if (role === Role.ADMIN) return this.findAllForAdmin();
+        if (role === Role.LECTURER) return this.findByMentor(userId);
 
-        if (role === Role.LECTURER) {
-            return this.findByMentor(userId);
-        }
-
-        // Sinh viên: Chỉ xem đề tài của chính mình
         return this.prisma.project.findMany({
             where: { studentId: userId },
             include: { mentor: true, topic: true }
         });
     }
 
-    // 4. CHUNG: Xem chi tiết 1 đề tài (Trang Timeline/Chi tiết)
+    // 4. CHUNG: Xem chi tiết 1 đề tài
     async findOne(id: number) {
         const project = await this.prisma.project.findUnique({
             where: { id: id },
@@ -81,9 +77,7 @@ export class ProjectsService {
                 student: { select: { fullName: true, email: true, id: true } },
                 mentor: { select: { id: true, fullName: true, email: true, avatar: true } },
                 topic: { select: { id: true, name: true } },
-                progressLogs: {
-                    orderBy: { createdAt: 'desc' }
-                }
+                progressLogs: { orderBy: { createdAt: 'desc' } }
             }
         });
 
@@ -91,16 +85,14 @@ export class ProjectsService {
         return project;
     }
 
-    // 5. GIẢNG VIÊN: Duyệt đề tài hoặc Chấm điểm kết thúc
+    // 5. GIẢNG VIÊN: Duyệt đề tài hoặc Chấm điểm (TÍCH HỢP NOTIFICATION)
     async updateStatus(id: number, dto: UpdateProjectStatusDto) {
         let newProgress: number | undefined = undefined;
-
-        // Cập nhật tiến độ dựa trên trạng thái mới
         if (dto.status === ProjectStatus.APPROVED) newProgress = 10;
         if (dto.status === ProjectStatus.COMPLETED) newProgress = 100;
         if (dto.status === ProjectStatus.REJECTED) newProgress = 0;
 
-        return this.prisma.project.update({
+        const project = await this.prisma.project.update({
             where: { id: id },
             data: {
                 status: dto.status,
@@ -108,28 +100,40 @@ export class ProjectsService {
                 score: dto.score,
                 progress: newProgress ?? undefined,
             },
-            include: {
-                student: { select: { email: true, fullName: true } }
-            }
         });
+
+        // Bắn thông báo cho sinh viên về trạng thái mới
+        await this.notificationsService.createNotification(
+            project.studentId,
+            'Cập nhật trạng thái đề tài',
+            `Đề tài "${project.name}" đã được chuyển sang trạng thái: ${dto.status}`,
+            '/student/my-project'
+        );
+
+        return project;
     }
 
-    // 6. ADMIN: Phân công lại Giảng viên
+    // 6. ADMIN: Phân công lại Giảng viên (TÍCH HỢP NOTIFICATION)
     async assignMentor(projectId: number, dto: AssignMentorDto) {
-        return this.prisma.project.update({
+        const project = await this.prisma.project.update({
             where: { id: projectId },
             data: { mentorId: dto.mentorId },
-            include: {
-                mentor: { select: { fullName: true, email: true } },
-                student: { select: { fullName: true } }
-            }
         });
+
+        // Thông báo cho sinh viên về giảng viên mới
+        await this.notificationsService.createNotification(
+            project.studentId,
+            'Phân công giảng viên hướng dẫn',
+            `Bạn đã được phân công Giảng viên hướng dẫn mới cho đề tài: ${project.name}`,
+            '/student/my-project'
+        );
+
+        return project;
     }
 
-    // 7. SINH VIÊN: Chỉnh sửa thông tin (Khi PENDING)
+    // 7. SINH VIÊN: Chỉnh sửa thông tin
     async updateInfo(projectId: number, userId: number, dto: any) {
         const project = await this.prisma.project.findUnique({ where: { id: projectId } });
-
         if (!project) throw new NotFoundException('Không tìm thấy đề tài');
         if (project.studentId !== userId) throw new ForbiddenException('Không có quyền');
         if (project.status !== ProjectStatus.PENDING) {
@@ -147,17 +151,14 @@ export class ProjectsService {
         });
     }
 
-    // 8. SINH VIÊN: Thêm nhật ký tiến độ hàng tuần
+    // 8. SINH VIÊN: Thêm nhật ký tiến độ
     async addProgress(projectId: number, data: any) {
         const percentValue = parseInt(data.percent);
-
-        // 1. Cập nhật tiến độ tổng của đề tài
         await this.prisma.project.update({
             where: { id: projectId },
             data: { progress: percentValue }
         });
 
-        // 2. Lưu nhật ký tiến độ vào bảng ProjectProgress
         return this.prisma.projectProgress.create({
             data: {
                 projectId: projectId,
@@ -170,12 +171,23 @@ export class ProjectsService {
         });
     }
 
-    // 9. GIẢNG VIÊN: Phản hồi báo cáo tiến độ
+    // 9. GIẢNG VIÊN: Phản hồi báo cáo tiến độ (TÍCH HỢP NOTIFICATION)
     async addProgressFeedback(progressId: number, feedback: string) {
-        return this.prisma.projectProgress.update({
+        const progress = await this.prisma.projectProgress.update({
             where: { id: progressId },
-            data: { feedback }
+            data: { feedback },
+            include: { project: true }
         });
+
+        // Thông báo sinh viên có nhận xét mới
+        await this.notificationsService.createNotification(
+            progress.project.studentId,
+            'Phản hồi tiến độ mới',
+            `Giảng viên hướng dẫn vừa nhận xét báo cáo: "${progress.title}"`,
+            '/student/my-project'
+        );
+
+        return progress;
     }
 
     // 10. GIẢNG VIÊN: Xem đề tài mình phụ trách
@@ -218,7 +230,7 @@ export class ProjectsService {
         });
     }
 
-    // 12. TIỆN ÍCH: Lấy danh mục cho Frontend
+    // 12. TIỆN ÍCH
     async getTopics() {
         return this.prisma.topic.findMany({ orderBy: { name: 'asc' } });
     }

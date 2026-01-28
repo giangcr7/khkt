@@ -1,8 +1,9 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Param, UseGuards, Request } from '@nestjs/common'; // Thêm Patch, Param
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { NotificationsService } from './notifications.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('notifications')
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
@@ -11,6 +12,14 @@ export class NotificationsController {
   @Get('my')
   @ApiOperation({ summary: 'Sinh viên lấy danh sách thông báo của mình' })
   async getMyNotifications(@Request() req) {
-    return this.notificationsService.getMyNotifications(req.user.userId);
+    // Lưu ý: req.user.userId hoặc req.user.id tùy vào cách bạn gán ở JwtStrategy
+    return this.notificationsService.getMyNotifications(req.user.userId || req.user.id);
+  }
+
+  // BỔ SUNG HÀM NÀY:
+  @Patch(':id/read')
+  @ApiOperation({ summary: 'Đánh dấu thông báo là đã đọc' })
+  async markAsRead(@Param('id') id: string) {
+    return this.notificationsService.markAsRead(Number(id));
   }
 }

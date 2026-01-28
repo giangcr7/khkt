@@ -19,4 +19,11 @@ export class NotificationsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+  // Trong file notifications.service.ts
+async markAsRead(id: number) {
+  return this.prisma.notification.update({
+    where: { id },
+    data: { isRead: true }, // Chuyển trạng thái sang đã đọc
+  });
+}
 }
