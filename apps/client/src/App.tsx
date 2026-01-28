@@ -21,7 +21,7 @@ import FAQPage from './pages/FAQ/FAQPage';
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
 import MyProjectPage from './pages/Student/MyProject';
-
+import NotificationsPage from './pages/Student/Notifications'; // Đảm bảo đúng đường dẫn file
 // Lecturer Pages
 import LecturerDashboard from './pages/Lecturer/LecturerDashboard';
 import ManageProjects from './pages/Lecturer/ManageProjects';
@@ -65,7 +65,7 @@ function App() {
             <Route index element={<StudentDashboard />} />
             <Route path="my-project" element={<MyProjectPage />} />
             <Route path="resources" element={<ResourcesPage />} />
-            <Route path="notifications" element={<h2>Thông báo</h2>} />
+           <Route path="notifications" element={<NotificationsPage />} />
           </Route>
         </Route>
 

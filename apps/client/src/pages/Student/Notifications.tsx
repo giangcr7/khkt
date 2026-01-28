@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, List, Typography, Badge, Tag, Button, message, Empty, Spin, Space } from 'antd';
 import { BellOutlined, CheckCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api';
-import dayjs from 'dayjs'; // Cài đặt: npm install dayjs
+import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
@@ -14,8 +14,7 @@ const StudentNotifications: React.FC = () => {
 
     const fetchNotifications = async () => {
         try {
-            // Gọi đến API bạn vừa tạo ở Backend
-            const res = await api.get('/notifications/my'); 
+            const res = await api.get('/notifications/my');
             setNotifications(res.data);
         } catch (error) {
             message.error('Không thể tải thông báo');
@@ -26,13 +25,21 @@ const StudentNotifications: React.FC = () => {
 
     useEffect(() => { fetchNotifications(); }, []);
 
-    const handleMarkAsRead = async (id: number) => {
+    const handleMarkAsRead = async (id: number, isRead: boolean) => {
+        // Nếu thông báo đã đọc rồi thì không gọi API nữa
+        if (isRead) return;
+
         try {
             await api.patch(`/notifications/${id}/read`);
-            // Cập nhật state tại chỗ để đổi màu giao diện
+            
+            // 1. Cập nhật giao diện tại trang này
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+            
+            // 2. PHÁT TÍN HIỆU: Để Navbar biết đường mà cập nhật lại số lượng
+            window.dispatchEvent(new Event('notificationRead'));
+            
         } catch (err) {
-            console.error(err);
+            console.error('Lỗi khi đánh dấu đã đọc:', err);
         }
     };
 
@@ -58,14 +65,18 @@ const StudentNotifications: React.FC = () => {
                                     transition: '0.3s',
                                     padding: '16px',
                                     borderRadius: '8px',
-                                    marginBottom: '8px'
+                                    marginBottom: '8px',
+                                    border: '1px solid #f0f0f0'
                                 }}
-                                onClick={() => handleMarkAsRead(item.id)}
+                                onClick={() => handleMarkAsRead(item.id, item.isRead)}
                             >
                                 <List.Item.Meta
                                     avatar={
                                         <Badge dot={!item.isRead}>
-                                            {item.isRead ? <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} /> : <InfoCircleOutlined style={{ color: '#1890ff', fontSize: 20 }} />}
+                                            {item.isRead ? 
+                                                <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} /> : 
+                                                <InfoCircleOutlined style={{ color: '#1890ff', fontSize: 20 }} />
+                                            }
                                         </Badge>
                                     }
                                     title={
@@ -78,7 +89,7 @@ const StudentNotifications: React.FC = () => {
                                         <div>
                                             <div style={{ color: '#555', marginBottom: '4px' }}>{item.content}</div>
                                             <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                {dayjs(item.createdAt).fromNow()} {/* Hiển thị: "2 giờ trước" */}
+                                                {dayjs(item.createdAt).fromNow()}
                                             </Text>
                                         </div>
                                     }
