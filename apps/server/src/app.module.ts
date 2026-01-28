@@ -16,6 +16,7 @@ import { EventsModule } from './modules/events/events.module';
 import { FaqsModule } from './modules/faqs/faqs.module';
 // --- 1. IMPORT GUIDEMODULE ---
 import { GuideModule } from './modules/guide/guide.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { GuideModule } from './modules/guide/guide.module';
     EventsModule,
     FaqsModule,
     GuideModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

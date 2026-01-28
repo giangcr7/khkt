@@ -1,31 +1,28 @@
 import {
     Controller, Get, Post, Body, UseGuards, Request, Patch,
-    Param, ParseIntPipe, UseInterceptors, UploadedFile, Delete
+    Param, ParseIntPipe, Delete
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-import { CreateProjectDto } from './dto/create-project.dto';
+// SỬA TẠI ĐÂY: Đảm bảo tên file là jwt-auth.guard (khớp với file bạn đã gửi)
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Public } from '../auth/decorators/public.decorator';
+import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 import { AssignMentorDto } from './dto/assign-mentor.dto';
-import { ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadService } from '../upload/upload.service';
-import { Public } from '../auth/decorators/public.decorator';
+import { Role } from '@prisma/client';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
 @ApiTags('Projects')
+@ApiBearerAuth() // Thêm để Swagger hiện nút khóa
 @Controller('projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
-    constructor(
-        private readonly projectsService: ProjectsService,
-        private readonly uploadService: UploadService
-    ) { }
+    constructor(private readonly projectsService: ProjectsService) { }
 
     // ==========================================
-    // 1. PUBLIC ROUTES (Trang chủ & Khách)
+    // 1. PUBLIC ROUTES (Không cần Token)
     // ==========================================
 
     @Public()
@@ -53,17 +50,18 @@ export class ProjectsController {
     }
 
     // ==========================================
-    // 2. ADMIN ROUTES (Dành riêng cho Quản trị viên)
+    // 2. ADMIN ROUTES
     // ==========================================
 
     @Get('admin/all')
-    @Roles(Role.ADMIN) // Khớp với API gọi từ AdminProjectManagement.tsx
+    @Roles(Role.ADMIN)
+    @ApiOperation({ summary: 'Admin lấy toàn bộ đề tài hệ thống' })
     findAllForAdmin() {
         return this.projectsService.findAllForAdmin();
     }
 
     @Patch(':id/assign')
-    @Roles(Role.ADMIN) // Chức năng phân công GV cho đề tài
+    @Roles(Role.ADMIN)
     assignMentor(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: AssignMentorDto
@@ -72,17 +70,17 @@ export class ProjectsController {
     }
 
     // ==========================================
-    // 3. LECTURER ROUTES (Dành cho Giảng viên)
+    // 3. LECTURER ROUTES
     // ==========================================
 
     @Get('managed')
-    @Roles(Role.LECTURER) // Lấy đề tài GV đang hướng dẫn
+    @Roles(Role.LECTURER)
     getManagedProjects(@Request() req) {
         return this.projectsService.findByMentor(req.user.userId);
     }
 
     @Patch('progress/:progressId/feedback')
-    @Roles(Role.LECTURER) // GV nhận xét tiến độ tuần
+    @Roles(Role.LECTURER)
     addFeedback(
         @Param('progressId', ParseIntPipe) progressId: number,
         @Body() body: { feedback: string }
@@ -91,7 +89,7 @@ export class ProjectsController {
     }
 
     @Patch(':id/status')
-    @Roles(Role.LECTURER, Role.ADMIN) // Duyệt hoặc chấm điểm đề tài
+    @Roles(Role.LECTURER, Role.ADMIN)
     updateStatus(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateProjectStatusDto
@@ -100,11 +98,12 @@ export class ProjectsController {
     }
 
     // ==========================================
-    // 4. COMMON & STUDENT ROUTES
+    // 4. STUDENT & COMMON ROUTES
     // ==========================================
 
     @Get()
     findAll(@Request() req) {
+        // req.user được gán từ JwtStrategy
         return this.projectsService.findAll(req.user.role, req.user.userId);
     }
 
@@ -130,14 +129,12 @@ export class ProjectsController {
     }
 
     @Post(':id/progress')
-    @UseInterceptors(FileInterceptor('file'))
+    @Roles(Role.STUDENT)
     async addProgress(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: any,
-        @UploadedFile() file: Express.Multer.File
+        @Body() body: { week: number; report: string; fileUrl?: string; fileName?: string }
     ) {
-        const fileUrl = file ? await this.uploadService.save(file) : null;
-        return this.projectsService.addProgress(id, { ...body, fileUrl, fileName: file?.originalname });
+        return this.projectsService.addProgress(id, body);
     }
 
     @Delete(':id')

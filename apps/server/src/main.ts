@@ -23,7 +23,12 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document); // Đường dẫn truy cập: http://localhost:3000/api
 
   // 3. Kích hoạt CORS (Để Frontend React/Vue/NextJS gọi được API)
-  app.enableCors();
+app.enableCors({
+    origin: 'http://localhost:5173', // Địa chỉ chính xác của Frontend Vite
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Accept,Authorization',
+    credentials: true,
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

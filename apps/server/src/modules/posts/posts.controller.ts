@@ -13,10 +13,11 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   // 1. Tạo bài viết (Chỉ ADMIN hoặc LECTURER)
-  @Post()
+@Post()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN, Role.LECTURER)
   create(@Request() req, @Body() createPostDto: CreatePostDto) {
+    // req.user.userId lấy từ Token, createPostDto.thumbnail lấy từ URL Cloudinary
     return this.postsService.create(req.user.userId, createPostDto);
   }
 
@@ -34,13 +35,13 @@ export class PostsController {
   }
 
   // 4. Sửa bài viết (Chỉ ADMIN/LECTURER)
-  @Patch(':id')
+@Patch(':id')
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN, Role.LECTURER)
   update(@Param('id', ParseIntPipe) id: number, @Body() updatePostDto: UpdatePostDto) {
+    // updatePostDto cũng sẽ chỉ nhận chuỗi JSON
     return this.postsService.update(id, updatePostDto);
   }
-
   // 5. Xóa bài viết (Chỉ ADMIN)
   @Delete(':id')
   @UseGuards(JwtAuthGuard)

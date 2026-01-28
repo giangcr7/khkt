@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventsService {
@@ -11,40 +13,34 @@ export class EventsService {
         });
     }
 
-    async create(data: any) {
+    async create(dto: CreateEventDto) {
+        // Dữ liệu từ JSON đã được class-validator đảm bảo kiểu dữ liệu
         return this.prisma.event.create({
             data: {
-                title: data.title,
-                description: data.description,
-                startDate: new Date(data.startDate),
-                endDate: data.endDate ? new Date(data.endDate) : null,
-                // Chuyển đổi 'true'/'false' (string) sang boolean
-                isImportant: String(data.isImportant) === 'true',
-                fileUrl: data.fileUrl,
-                fileName: data.fileName,
+                ...dto,
+                startDate: new Date(dto.startDate),
+                endDate: dto.endDate ? new Date(dto.endDate) : null,
+                // Không cần String(...) === 'true' vì DTO đã ép kiểu Boolean
             },
         });
     }
 
-    async update(id: number, data: any) {
+    async update(id: number, dto: UpdateEventDto) {
+        const event = await this.prisma.event.findUnique({ where: { id } });
+        if (!event) throw new NotFoundException('Không tìm thấy mốc thời gian này');
+
         return this.prisma.event.update({
             where: { id },
             data: {
-                title: data.title,
-                description: data.description,
-                startDate: data.startDate ? new Date(data.startDate) : undefined,
-                endDate: data.endDate !== undefined ? (data.endDate ? new Date(data.endDate) : null) : undefined,
-                // Ép kiểu boolean an toàn
-                isImportant: data.isImportant !== undefined ? String(data.isImportant) === 'true' : undefined,
-                fileUrl: data.fileUrl,
-                fileName: data.fileName,
+                ...dto,
+                startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+                endDate: dto.endDate !== undefined ? (dto.endDate ? new Date(dto.endDate) : null) : undefined,
             },
         });
     }
 
     async remove(id: number) {
-        const event = await this.prisma.event.findUnique({ where: { id } });
-        if (!event) throw new NotFoundException('Không tìm thấy mốc thời gian này');
+        await this.prisma.event.findUnique({ where: { id } }); // Đảm bảo tồn tại trước khi xóa
         return this.prisma.event.delete({ where: { id } });
     }
 }

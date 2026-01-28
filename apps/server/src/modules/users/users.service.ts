@@ -1,7 +1,8 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
     constructor(private prisma: PrismaService) { }
@@ -28,44 +29,49 @@ export class UsersService {
         });
     }
 
-    async findAll() {
-        return this.prisma.user.findMany({
-            orderBy: { id: 'asc' }
-        });
-    }
-
-    async create(data: any) {
-        // 1. Kiểm tra email trùng (Sửa lại gọi hàm findOneByEmail)
-        const exists = await this.findOneByEmail(data.email);
+async findAll() {
+    return this.prisma.user.findMany({
+        select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+            isActive: true,
+            avatar: true, // Trả thêm avatar để hiển thị trên bảng
+            createdAt: true,
+        },
+        orderBy: { id: 'asc' }
+    });
+}
+async create(dto: CreateUserDto) {
+        const exists = await this.findOneByEmail(dto.email);
         if (exists) throw new ConflictException('Email đã tồn tại!');
 
-        // 2. Mã hóa mật khẩu
-        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-        // 3. Tạo user
         return this.prisma.user.create({
             data: {
-                email: data.email,
+                ...dto, // Tự động lấy avatar URL nếu có trong JSON
                 password: hashedPassword,
-                fullName: data.fullName,
-                role: data.role,
-                isActive: data.isActive ?? true
+                isActive: dto.isActive ?? true
             }
         });
     }
 
-    async update(id: number, data: any) {
-        // Nếu có gửi mật khẩu mới lên thì mã hóa
-        if (data.password && data.password.trim() !== '') {
-            data.password = await bcrypt.hash(data.password, 10);
+    // CẬP NHẬT: Nhận URL chuỗi từ Cloudinary thông qua DTO
+    async update(id: number, dto: UpdateUserDto) {
+        if (dto.password && dto.password.trim() !== '') {
+            dto.password = await bcrypt.hash(dto.password, 10);
         } else {
-            delete data.password;
+            delete dto.password;
         }
 
         try {
             return await this.prisma.user.update({
                 where: { id },
-                data: data
+                data: {
+                    ...dto // Bao gồm trường avatar: string
+                }
             });
         } catch (error) {
             throw new NotFoundException('Người dùng không tồn tại');

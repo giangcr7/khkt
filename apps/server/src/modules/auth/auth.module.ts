@@ -14,13 +14,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';   // Import đường d
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: parseInt(configService.getOrThrow<string>('JWT_EXPIRATION')),
+          // Ép kiểu sang 'any' hoặc 'string' để thỏa mãn JwtModuleOptions
+          expiresIn: configService.get<string>('JWT_EXPIRATION') as any, 
         },
       }),
-      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
