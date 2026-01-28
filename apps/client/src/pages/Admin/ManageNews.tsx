@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Tag, Space, Card, Typography, Popconfirm, message, Tooltip, Image } from 'antd';
+// Thêm Upload vào danh sách import
+import { Table, Button, Modal, Form, Input, Select, Tag, Space, Card, Typography, Popconfirm, message, Tooltip, Image, Upload } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined,
     RocketOutlined, BellOutlined, TrophyOutlined, LinkOutlined,
-    PictureOutlined
+    PictureOutlined, UploadOutlined // Thêm Icon Upload
 } from '@ant-design/icons';
 import api from '../../services/api';
+// IMPORT SERVICE UPLOAD
+import { uploadService } from '../../services/upload.service';
 
 const { Title, Text } = Typography;
 
 const ManageNews: React.FC = () => {
+    // ... Giữ nguyên các state cũ ...
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState<number | null>(null);
+    
+    // THÊM STATE ĐỂ QUẢN LÝ FILE UPLOAD
+    const [fileList, setFileList] = useState<any[]>([]);
 
-    // 1. Tải danh sách bài viết từ Backend
+    // 1. Tải danh sách bài viết (Giữ nguyên)
     const fetchPosts = async () => {
         setLoading(true);
         try {
@@ -31,18 +38,22 @@ const ManageNews: React.FC = () => {
 
     useEffect(() => { fetchPosts(); }, []);
 
-    // 2. Mở Modal Thêm/Sửa
+    // 2. Mở Modal (Cập nhật để hiển thị ảnh cũ nếu có)
     const openModal = (record?: any) => {
+        setFileList([]); // Reset file list mỗi khi mở modal
         if (record) {
             setEditingId(record.id);
-            // Chỉ truyền các giá trị cần thiết vào Form, tránh truyền cả Object 'author'
             form.setFieldsValue({
                 title: record.title,
                 type: record.type,
-                thumbnail: record.thumbnail,
+                thumbnail: record.thumbnail, // Vẫn giữ field này ẩn để lưu URL
                 externalLink: record.externalLink,
                 content: record.content,
             });
+            // Nếu có ảnh cũ, hiển thị vào danh sách preview của Upload
+            if (record.thumbnail) {
+                setFileList([{ uid: '-1', name: 'image.png', status: 'done', url: record.thumbnail }]);
+            }
         } else {
             setEditingId(null);
             form.resetFields();
@@ -51,40 +62,46 @@ const ManageNews: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    // 3. Xử lý lưu dữ liệu (Thêm mới hoặc Cập nhật)
+    // 3. XỬ LÝ LƯU DỮ LIỆU (TÍCH HỢP BƯỚC UPLOAD)
     const onFinish = async (values: any) => {
         setLoading(true);
         try {
-            // "LÀM SẠCH" dữ liệu trước khi gửi lên Backend để khớp với DTO
+            let finalImageUrl = values.thumbnail;
+
+            // BƯỚC 1: Nếu có file mới được chọn, tiến hành upload lên Cloudinary
+            if (fileList.length > 0 && fileList[0].originFileObj) {
+                message.loading({ content: 'Đang tải ảnh lên Cloudinary...', key: 'up' });
+                // Truyền folder 'posts' để Cloudinary tự phân loại
+                finalImageUrl = await uploadService.uploadFile(fileList[0].originFileObj, 'posts');
+                message.success({ content: 'Tải ảnh thành công!', key: 'up' });
+            }
+
+            // BƯỚC 2: GỬI JSON (application/json)
             const payload = {
                 title: values.title,
                 content: values.content,
-                thumbnail: values.thumbnail,
+                thumbnail: finalImageUrl, // Đây là URL string nhận về từ bước 1
                 type: values.type,
                 externalLink: values.externalLink,
             };
 
             if (editingId) {
-                // Cập nhật bài viết hiện có
                 await api.patch(`/posts/${editingId}`, payload);
                 message.success('Cập nhật bài viết thành công');
             } else {
-                // Đăng bài viết mới
                 await api.post('/posts', payload);
                 message.success('Đăng bài viết mới thành công');
             }
             setIsModalOpen(false);
             fetchPosts();
         } catch (error: any) {
-            // Hiển thị chi tiết lỗi từ Backend (DTO Validation)
-            const errorMsg = error.response?.data?.message;
-            message.error(Array.isArray(errorMsg) ? errorMsg[0] : (errorMsg || 'Lỗi khi lưu dữ liệu'));
+            message.error('Lỗi khi lưu bài viết');
         } finally {
             setLoading(false);
         }
     };
 
-    // 4. Xử lý xóa bài viết
+    // ... Giữ nguyên handleDelete và columns ...
     const handleDelete = async (id: number) => {
         try {
             await api.delete(`/posts/${id}`);
@@ -159,7 +176,6 @@ const ManageNews: React.FC = () => {
                     </Tooltip>
                     <Popconfirm
                         title="Xóa bài viết?"
-                        description="Hành động này sẽ xóa dữ liệu vĩnh viễn."
                         onConfirm={() => handleDelete(record.id)}
                         okText="Xóa"
                         cancelText="Hủy"
@@ -181,14 +197,7 @@ const ManageNews: React.FC = () => {
                 extra={<Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => openModal()}>Đăng bài mới</Button>}
                 variant="borderless"
             >
-                <Table
-                    dataSource={posts}
-                    columns={columns}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{ pageSize: 8 }}
-                    bordered
-                />
+                <Table dataSource={posts} columns={columns} rowKey="id" loading={loading} pagination={{ pageSize: 8 }} bordered />
             </Card>
 
             <Modal
@@ -198,37 +207,44 @@ const ManageNews: React.FC = () => {
                 onCancel={() => setIsModalOpen(false)}
                 width={850}
                 confirmLoading={loading}
-                okText={editingId ? "Lưu thay đổi" : "Đăng bài ngay"}
             >
                 <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <Form.Item name="title" label="Tiêu đề bài viết" rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài viết' }]}>
-                        <Input placeholder="Ví dụ: Cẩm nang thực hiện Nghiên cứu khoa học dành cho Tân sinh viên..." />
+                    <Form.Item name="title" label="Tiêu đề bài viết" rules={[{ required: true }]}>
+                        <Input placeholder="Tiêu đề bài viết..." />
                     </Form.Item>
 
                     <div style={{ display: 'flex', gap: 16 }}>
-                        <Form.Item name="type" label="Chuyên mục phân loại" rules={[{ required: true }]} style={{ flex: 1 }}>
-                            <Select placeholder="Chọn loại bài viết">
-                                <Select.Option value="NEWS">Tin tức - Thông báo mới nhất</Select.Option>
-                                <Select.Option value="GUIDE">Hướng dẫn làm NCKH (A-Z)</Select.Option>
-                                <Select.Option value="BLOG">Góc chia sẻ kinh nghiệm (Blog)</Select.Option>
-                                <Select.Option value="CONTEST">Học bổng - Cuộc thi - Sự kiện</Select.Option>
+                        <Form.Item name="type" label="Phân loại" rules={[{ required: true }]} style={{ flex: 1 }}>
+                            <Select>
+                                <Select.Option value="NEWS">Tin tức</Select.Option>
+                                <Select.Option value="GUIDE">Hướng dẫn</Select.Option>
+                                <Select.Option value="BLOG">Blog</Select.Option>
+                                <Select.Option value="CONTEST">Cuộc thi</Select.Option>
                             </Select>
                         </Form.Item>
-                        <Form.Item name="thumbnail" label="Đường dẫn ảnh đại diện (Thumbnail URL)" style={{ flex: 1 }}>
-                            <Input placeholder="https://example.com/image.jpg" prefix={<PictureOutlined />} />
+
+                        {/* THAY THẾ Ô INPUT BẰNG COMPONENT UPLOAD */}
+                        <Form.Item label="Ảnh đại diện (Upload lên Cloudinary)" style={{ flex: 1 }}>
+                            <Upload
+                                listType="picture"
+                                maxCount={1}
+                                fileList={fileList}
+                                beforeUpload={() => false} // Không cho tự động upload, để onFinish xử lý
+                                onChange={({ fileList }) => setFileList(fileList)}
+                            >
+                                <Button icon={<UploadOutlined />} block>Chọn ảnh từ máy tính</Button>
+                            </Upload>
+                            {/* Input ẩn để giữ giá trị URL cũ khi sửa */}
+                            <Form.Item name="thumbnail" noStyle><Input type="hidden" /></Form.Item>
                         </Form.Item>
                     </div>
 
-                    <Form.Item
-                        name="externalLink"
-                        label="Liên kết đính kèm (URL)"
-                        extra="Sử dụng để dẫn link Google Drive tài liệu mẫu, link Video Youtube hướng dẫn, hoặc link bài báo gốc."
-                    >
-                        <Input placeholder="https://drive.google.com/... hoặc https://youtube.com/..." prefix={<LinkOutlined />} />
+                    <Form.Item name="externalLink" label="Liên kết đính kèm">
+                        <Input placeholder="https://..." prefix={<LinkOutlined />} />
                     </Form.Item>
 
-                    <Form.Item name="content" label="Nội dung chi tiết" rules={[{ required: true, message: 'Nội dung bài viết không được để trống' }]}>
-                        <Input.TextArea rows={12} placeholder="Nội dung bài viết trình bày chi tiết tại đây..." />
+                    <Form.Item name="content" label="Nội dung" rules={[{ required: true }]}>
+                        <Input.TextArea rows={10} />
                     </Form.Item>
                 </Form>
             </Modal>

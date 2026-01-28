@@ -20,12 +20,11 @@ export const authService = {
      * @param role Vai trò người dùng (STUDENT, LECTURER, ADMIN)
      * @param user Đối tượng thông tin chi tiết người dùng
      */
-    saveToken: (token: string, role: string, user: any) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
-        localStorage.setItem('user', JSON.stringify(user)); // Lưu để hiển thị fullName và avatar
-    },
-
+  saveToken(token: string, role: string, user: any) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('role', role); // LƯU TRỰC TIẾP, không JSON.stringify
+    localStorage.setItem('user', JSON.stringify(user)); // Object thì mới stringify
+},
     // Đăng xuất và dọn dẹp bộ nhớ
     logout: () => {
         localStorage.clear(); // Xóa tất cả để tránh xung đột dữ liệu cũ

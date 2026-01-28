@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Menu, Button, Space, Typography, Dropdown, Tag, Avatar } from 'antd';
+import { Layout, Menu, Button, Space, Typography, Dropdown, Tag, Avatar, Badge, message } from 'antd';
 import {
     HomeOutlined, DashboardOutlined, UserOutlined, LogoutOutlined,
     RocketOutlined, CalendarOutlined, ReadOutlined, FileSearchOutlined,
-    ProjectOutlined, TeamOutlined, QuestionCircleOutlined, InfoCircleOutlined
+    ProjectOutlined, TeamOutlined, QuestionCircleOutlined, InfoCircleOutlined,
+    BellOutlined // Import thêm icon chuông
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import api from '../services/api';
 const { Header } = Layout;
 const { Title, Text } = Typography;
 
@@ -16,17 +17,37 @@ const Navbar: React.FC = () => {
 
     const [role, setRole] = useState<string | null>(localStorage.getItem('role'));
     const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || '{}'));
+    const [unreadCount, setUnreadCount] = useState(0); // State quản lý số thông báo chưa đọc
+
+    // Hàm lấy số lượng thông báo chưa đọc
+    const fetchUnreadNotis = async () => {
+        if (!localStorage.getItem('token')) return;
+        try {
+            // Gọi API lấy thông báo của tôi
+            const res = await api.get('/notifications/my');
+            const unread = res.data.filter((n: any) => !n.isRead).length; // Lọc các thông báo có isRead = false
+            setUnreadCount(unread);
+        } catch (error) {
+            console.error("Lỗi tải thông báo Navbar");
+        }
+    };
 
     useEffect(() => {
         setRole(localStorage.getItem('role'));
         const storedUser = localStorage.getItem('user');
         if (storedUser) setUser(JSON.parse(storedUser));
+        
+        // Chỉ lấy thông báo nếu người dùng đã đăng nhập
+        if (localStorage.getItem('token')) {
+            fetchUnreadNotis();
+        }
     }, [location]);
 
     const handleLogout = () => {
         localStorage.clear();
         setRole(null);
         setUser({});
+        setUnreadCount(0);
         navigate('/');
         window.location.reload();
     };
@@ -43,10 +64,11 @@ const Navbar: React.FC = () => {
         const currentRole = role?.toUpperCase();
         if (currentRole === 'STUDENT') {
             items.push({ key: '/student/my-project', label: 'Đề tài của tôi', icon: <ProjectOutlined />, onClick: () => navigate('/student/my-project') });
+            // Thêm menu Thông báo cho Sinh viên
+            items.push({ key: '/student/notifications', label: 'Thông báo', icon: <BellOutlined />, onClick: () => navigate('/student/notifications') });
         } else if (currentRole === 'LECTURER') {
             items.push({ key: '/lecturer/manage-projects', label: 'Quản lý hướng dẫn', icon: <ProjectOutlined />, onClick: () => navigate('/lecturer/manage-projects') });
         } else if (currentRole === 'ADMIN') {
-            // SỬA TẠI ĐÂY: Đổi /admin/users thành /admin/user-management
             items.push({ key: '/admin/user-management', label: 'Quản trị hệ thống', icon: <TeamOutlined />, onClick: () => navigate('/admin/user-management') });
         }
 
@@ -55,36 +77,32 @@ const Navbar: React.FC = () => {
 
     return (
         <Header style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#001529',
-            padding: '0 24px',
-            height: '64px',
+            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#001529', padding: '0 24px', height: '64px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}>
-            {/* Trái: Logo */}
             <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }} onClick={() => navigate('/')}>
                 <RocketOutlined style={{ color: '#1890ff', fontSize: '24px', marginRight: '8px' }} />
                 <Title level={4} style={{ color: '#fff', margin: 0, whiteSpace: 'nowrap' }}>NCKH TLU</Title>
             </div>
 
-            {/* Giữa: Menu - Đã chuyển sang Navigation thay vì Scroll */}
             <Menu
-                theme="dark"
-                mode="horizontal"
+                theme="dark" mode="horizontal"
                 selectedKeys={[location.pathname]}
                 items={getNavItems()}
                 style={{ flex: 1, minWidth: 0, marginLeft: '20px', border: 'none' }}
             />
 
-            {/* Phải: User Profile & Dropdown */}
-            <div style={{ flexShrink: 0, marginLeft: '10px' }}>
+            <div style={{ flexShrink: 0, marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
+                {role && (
+                    <div style={{ marginRight: '20px', cursor: 'pointer' }} onClick={() => navigate(role.toLowerCase() === 'student' ? '/student/notifications' : '#')}>
+                        <Badge count={unreadCount} overflowCount={99} size="small">
+                            <BellOutlined style={{ color: '#fff', fontSize: '20px' }} />
+                        </Badge>
+                    </div>
+                )}
+
                 {!role ? (
                     <Button type="primary" shape="round" onClick={() => navigate('/login')}>Đăng nhập</Button>
                 ) : (
@@ -116,7 +134,7 @@ const Navbar: React.FC = () => {
                         }}
                     >
                         <Space style={{ cursor: 'pointer', padding: '0 8px' }}>
-                            <div style={{ textAlign: 'right', lineHeight: '1.2', display: 'none', md: 'block' } as any}>
+                            <div style={{ textAlign: 'right', lineHeight: '1.2' }}>
                                 <Text strong style={{ color: '#fff', display: 'block', maxWidth: '120px' }} ellipsis>
                                     {user.fullName || 'Người dùng'}
                                 </Text>
@@ -124,11 +142,7 @@ const Navbar: React.FC = () => {
                                     {role === 'ADMIN' ? 'Quản trị viên' : role === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'}
                                 </Tag>
                             </div>
-                            <Avatar
-                                src={user.avatar}
-                                icon={<UserOutlined />}
-                                style={{ border: '2px solid #1890ff', backgroundColor: '#87d068' }}
-                            />
+                            <Avatar src={user.avatar} icon={<UserOutlined />} style={{ border: '2px solid #1890ff', backgroundColor: '#87d068' }} />
                         </Space>
                     </Dropdown>
                 )}

@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, Statistic, message, Progress, Typography, Divider, List, Tag, Button, Space, Skeleton, Badge } from 'antd';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Card, Col, Row, Statistic, message, Progress, Typography, Divider, List, Button, Space, Skeleton, Badge } from 'antd';
 import {
     UserOutlined,
     SolutionOutlined,
     FileTextOutlined,
-    CheckCircleOutlined,
     BookOutlined,
     CalendarOutlined,
     RocketOutlined,
     ExclamationCircleOutlined,
-    FileExcelOutlined,
-    ArrowRightOutlined
+    FileExcelOutlined
 } from '@ant-design/icons';
 import { Pie } from '@ant-design/plots';
 import api from '../../services/api';
@@ -26,11 +24,12 @@ const AdminDashboard: React.FC = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // Gọi API thống kê tổng quát từ Backend
                 const res = await api.get('/stats/dashboard');
                 setStats(res.data);
-            } catch (error) {
-                message.error('Không thể tải dữ liệu thống kê');
+            } catch (error: any) {
+                if (error.response?.status !== 401) {
+                    message.error('Không thể tải dữ liệu thống kê hệ thống');
+                }
             } finally {
                 setLoading(false);
             }
@@ -38,33 +37,39 @@ const AdminDashboard: React.FC = () => {
         fetchStats();
     }, []);
 
-    if (loading) return <div style={{ padding: '24px' }}><Skeleton active /><Skeleton active /></div>;
-    if (!stats) return <div style={{ textAlign: 'center', padding: 50 }}>Không có dữ liệu hệ thống</div>;
+    // Tối ưu hóa việc tính toán biểu đồ
+    const pieConfig = useMemo(() => {
+        if (!stats?.projects) return null;
 
-    // Cấu hình biểu đồ Donut Trạng thái
-    const pieData = [
-        { type: 'Chờ duyệt', value: stats.projects.pending },
-        { type: 'Đang thực hiện', value: stats.projects.inProgress },
-        { type: 'Đã hoàn thành', value: stats.projects.completed },
-        { type: 'Đã từ chối', value: stats.projects.rejected || 0 },
-    ];
+        const data = [
+            { type: 'Chờ duyệt', value: stats.projects.pending || 0 },
+            { type: 'Đang thực hiện', value: stats.projects.inProgress || 0 },
+            { type: 'Đã hoàn thành', value: stats.projects.completed || 0 },
+            { type: 'Đã từ chối', value: stats.projects.rejected || 0 },
+        ];
 
-    const pieConfig = {
-        appendPadding: 10,
-        data: pieData,
-        angleField: 'value',
-        colorField: 'type',
-        radius: 1,
-        innerRadius: 0.6,
-        label: {
-            type: 'inner',
-            offset: '-50%',
-            content: '{value}',
-            style: { textAlign: 'center', fontSize: 14 },
-        },
-        interactions: [{ type: 'element-active' }],
-        color: ['#faad14', '#1890ff', '#52c41a', '#ff4d4f'],
-    };
+        return {
+            appendPadding: 10,
+            data,
+            angleField: 'value',
+            colorField: 'type',
+            radius: 0.9,
+            innerRadius: 0.6,
+            label: {
+                type: 'inner',
+                offset: '-50%',
+                // Fix lỗi Undefined variable: value
+                content: (d: any) => `${d.value}`,
+                style: { textAlign: 'center', fontSize: 14, fontWeight: 'bold' },
+            },
+            interactions: [{ type: 'element-active' }],
+            color: ['#faad14', '#1890ff', '#52c41a', '#ff4d4f'],
+            legend: { position: 'bottom' }
+        };
+    }, [stats]);
+
+    if (loading) return <div style={{ padding: '24px' }}><Skeleton active paragraph={{ rows: 10 }} /></div>;
+    if (!stats) return <div style={{ textAlign: 'center', padding: 100 }}><Text type="secondary">Không có dữ liệu hệ thống</Text></div>;
 
     return (
         <div style={{ padding: '24px' }}>
@@ -74,7 +79,7 @@ const AdminDashboard: React.FC = () => {
                     <Text type="secondary">Cập nhật số liệu thống kê thực tế đến năm 2026</Text>
                 </Col>
                 <Col>
-                    <Button type="primary" icon={<FileExcelOutlined />} onClick={() => message.loading('Đang khởi tạo tệp báo cáo Excel...')}>
+                    <Button type="primary" icon={<FileExcelOutlined />} onClick={() => message.info('Tính năng đang được phát triển')}>
                         Xuất báo cáo tổng hợp
                     </Button>
                 </Col>
@@ -85,22 +90,22 @@ const AdminDashboard: React.FC = () => {
             <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} hoverable style={{ borderLeft: '4px solid #1890ff' }}>
-                        <Statistic title="Tổng Sinh viên" value={stats.users.student} prefix={<UserOutlined />} />
+                        <Statistic title="Tổng Sinh viên" value={stats.users?.student || 0} prefix={<UserOutlined />} />
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} hoverable style={{ borderLeft: '4px solid #722ed1' }}>
-                        <Statistic title="Tổng Giảng viên" value={stats.users.lecturer} prefix={<SolutionOutlined />} />
+                        <Statistic title="Tổng Giảng viên" value={stats.users?.lecturer || 0} prefix={<SolutionOutlined />} />
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} hoverable style={{ borderLeft: '4px solid #faad14' }}>
-                        <Statistic title="Tổng Đề tài" value={stats.projects.total} prefix={<FileTextOutlined />} />
+                        <Statistic title="Tổng Đề tài" value={stats.projects?.total || 0} prefix={<FileTextOutlined />} />
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} hoverable style={{ borderLeft: '4px solid #13c2c2' }}>
-                        <Statistic title="Tài liệu & Video" value={stats.resources} prefix={<BookOutlined />} />
+                        <Statistic title="Tài liệu & Video" value={stats.resources || 0} prefix={<BookOutlined />} />
                     </Card>
                 </Col>
             </Row>
@@ -108,26 +113,26 @@ const AdminDashboard: React.FC = () => {
             <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
                 {/* BIỂU ĐỒ TRẠNG THÁI */}
                 <Col xs={24} lg={10}>
-                    <Card title="Phân tích Trạng thái Đề tài" bordered={false} bodyStyle={{ height: 380 }}>
-                        <Pie {...pieConfig} />
+                    <Card title="Phân tích Trạng thái Đề tài" bordered={false} bodyStyle={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {pieConfig ? <Pie {...(pieConfig as any)} /> : <Text type="secondary">Chưa có dữ liệu biểu đồ</Text>}
                     </Card>
                 </Col>
 
-                {/* TÁC VỤ ƯU TIÊN (MỚI) */}
+                {/* TÁC VỤ ƯU TIÊN */}
                 <Col xs={24} lg={6}>
                     <Card title="Tác vụ ưu tiên" bordered={false} bodyStyle={{ height: 380 }}>
                         <Space direction="vertical" style={{ width: '100%' }}>
                             <div style={{ marginBottom: 16 }}>
                                 <Text type="secondary">Cần xử lý ngay:</Text>
                                 <div style={{ marginTop: 8 }}>
-                                    <Badge count={stats.projects.pending} overflowCount={99}>
-                                        <Button block onClick={() => navigate('/admin/projects')}>Duyệt đề tài mới</Button>
+                                    <Badge count={stats.projects?.pending || 0} overflowCount={99}>
+                                        <Button block onClick={() => navigate('/admin/manage-projects')}>Duyệt đề tài mới</Button>
                                     </Badge>
                                 </div>
                             </div>
                             <Divider style={{ margin: '12px 0' }} />
-                            <Button block icon={<RocketOutlined />} onClick={() => navigate('/admin/news')}>Đăng thông báo mới</Button>
-                            <Button block icon={<CalendarOutlined />} onClick={() => navigate('/admin/events')}>Cập nhật lộ trình</Button>
+                            <Button block icon={<RocketOutlined />} onClick={() => navigate('/admin/manage-news')}>Đăng thông báo mới</Button>
+                            <Button block icon={<CalendarOutlined />} onClick={() => navigate('/admin/manage-events')}>Cập nhật lộ trình</Button>
                             <Button block icon={<ExclamationCircleOutlined />} danger>Nhắc nhở trễ hạn</Button>
                         </Space>
                     </Card>
@@ -138,7 +143,7 @@ const AdminDashboard: React.FC = () => {
                     <Card title="Chỉ số hiệu quả (KPI)" bordered={false} bodyStyle={{ height: 380, textAlign: 'center' }}>
                         <Progress
                             type="dashboard"
-                            percent={Math.round((stats.projects.completed / stats.projects.total) * 100) || 0}
+                            percent={stats.projects?.total > 0 ? Math.round((stats.projects.completed / stats.projects.total) * 100) : 0}
                             strokeColor="#52c41a"
                             gapDegree={30}
                             width={180}
@@ -153,7 +158,6 @@ const AdminDashboard: React.FC = () => {
             </Row>
 
             <Row gutter={[16, 16]} style={{ marginTop: 24, marginBottom: 40 }}>
-                {/* LĨNH VỰC NGHIÊN CỨU */}
                 <Col xs={24} lg={14}>
                     <Card title="Phân bố theo Lĩnh vực (Topics)" bordered={false}>
                         <List
@@ -164,7 +168,7 @@ const AdminDashboard: React.FC = () => {
                                     <Card size="small" style={{ background: '#fafafa' }}>
                                         <Statistic
                                             title={item.name}
-                                            value={item._count.projects}
+                                            value={item._count?.projects || 0}
                                             suffix="đề tài"
                                             valueStyle={{ fontSize: 16 }}
                                         />
@@ -175,7 +179,6 @@ const AdminDashboard: React.FC = () => {
                     </Card>
                 </Col>
 
-                {/* NHẬT KÝ HỆ THỐNG (MỚI) */}
                 <Col xs={24} lg={10}>
                     <Card title="Nhật ký hoạt động" bordered={false} extra={<Button type="link">Chi tiết</Button>}>
                         <List

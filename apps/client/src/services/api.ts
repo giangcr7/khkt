@@ -1,37 +1,40 @@
 import axios from 'axios';
 
-// Tạo một instance của axios
 const api = axios.create({
-    // Lấy URL từ biến môi trường hoặc mặc định là localhost:3000
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    // BỎ headers mặc định ở đây để tránh xung đột với các request đặc biệt
 });
 
-// Trước khi gửi request đi
 api.interceptors.request.use(
     (config) => {
-        // SỬA: Lấy đúng key 'token' thay vì 'accessToken'
         const token = localStorage.getItem('token');
-
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+            // Xử lý triệt để dấu ngoặc kép và khoảng trắng dư thừa
+            const cleanToken = token.trim().replace(/^"|"$/g, ''); 
+            config.headers.Authorization = `Bearer ${cleanToken}`;
         }
         return config;
     },
     (error) => Promise.reject(error)
 );
 
-// Xử lý lỗi trả về
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // SỬA: Xóa đúng các key đã lưu trong authService
+        const { response, config } = error;
+
+        // CHỐNG VĂNG: Chỉ redirect nếu KHÔNG PHẢI là request đăng nhập
+        // Nếu đang ở trang login mà gọi sai pass bị 401 thì không được clear storage
+        if (response?.status === 401 && !config.url?.includes('/auth/login')) {
+            console.warn('Unauthorized! Đang dọn dẹp và chuyển hướng...');
             localStorage.clear();
+            // Xóa nốt Cookie rác nếu có thể (chỉ với cookie không HttpOnly)
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
             window.location.href = '/login';
         }
+
         return Promise.reject(error);
     }
 );
