@@ -22,6 +22,7 @@ import FAQPage from './pages/FAQ/FAQPage';
 import StudentDashboard from './pages/Student/Dashboard';
 import MyProjectPage from './pages/Student/MyProject';
 import NotificationsPage from './pages/Student/Notifications'; // Đảm bảo đúng đường dẫn file
+
 // Lecturer Pages
 import LecturerDashboard from './pages/Lecturer/LecturerDashboard';
 import ManageProjects from './pages/Lecturer/ManageProjects';
@@ -36,6 +37,8 @@ import ManageNews from './pages/Admin/ManageNews';
 import ManageResources from './pages/Admin/ManageResources';
 import ManageTopics from './pages/Admin/ManageTopics';
 import UserManagement from './pages/Admin/UserManagement';
+import RecruitmentList from './pages/Student/RecruitmentList';
+import RecruitmentDetailPage from './pages/Student/RecruitmentDetailPage';
 
 function App() {
   return (
@@ -66,6 +69,8 @@ function App() {
             <Route path="my-project" element={<MyProjectPage />} />
             <Route path="resources" element={<ResourcesPage />} />
            <Route path="notifications" element={<NotificationsPage />} />
+           <Route path="recruitment" element={<RecruitmentList />} />
+           <Route path="recruitment/:id" element={<RecruitmentDetailPage />} />
           </Route>
         </Route>
 

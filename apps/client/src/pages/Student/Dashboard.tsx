@@ -1,166 +1,226 @@
-import React, { useEffect, useState } from 'react';
-import { Typography, Steps, Card, Row, Col, Statistic, Button, Progress, List, Tag, Avatar, Space, Badge, Empty, Spin } from 'antd';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Typography, Steps, Card, Row, Col, Statistic, Button, Progress, List, Tag, Avatar, Space, Badge, Empty, Spin, Divider, message } from 'antd';
 import {
     FileSearchOutlined, TeamOutlined, FileProtectOutlined, CheckCircleOutlined,
-    CalendarOutlined, ProjectOutlined, BellOutlined,
-    MessageOutlined, UserAddOutlined, FireOutlined
+    ProjectOutlined, BellOutlined, UserAddOutlined, FireOutlined, MessageOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import dayjs from 'dayjs';
+import { io, Socket } from 'socket.io-client';
+import ChatWindow from '../../components/Chat/ChatWindow';
 
 const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const socketRef = useRef<Socket>();
 
-    // State quản lý dữ liệu từ CSDL
     const [project, setProject] = useState<any>(null);
     const [recruitments, setRecruitments] = useState([]);
-    const [deadline, setDeadline] = useState<{ days: number; date: string } | null>(null);
+    const [rooms, setRooms] = useState<any[]>([]); 
+    const [unreadNotis, setUnreadNotis] = useState(0);
+    const [deadline, setDeadline] = useState<{ days: number; date: string; title: string } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [activeChat, setActiveChat] = useState<{ roomId: number, receiver: any } | null>(null);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            setLoading(true);
-            try {
-                // 1. Lấy đề tài cá nhân
-                const projectRes = await api.get('/projects/my-project');
-                setProject(projectRes.data);
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-                // 2. Lấy danh sách tìm đồng đội thực tế từ CSDL
-                const recruitRes = await api.get('/recruitments?limit=3');
-                setRecruitments(recruitRes.data);
+    // Sử dụng useCallback để hàm có thể được gọi ổn định từ useEffect và các event handlers
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            // 1. Lấy tin tuyển dụng
+            const recruitRes = await api.get('/recruitment'); 
+            const recruitList = Array.isArray(recruitRes.data) ? recruitRes.data : (recruitRes.data.data || []);
+            setRecruitments(recruitList.slice(0, 3)); 
 
-                // 3. Lấy Timeline để tính toán deadline tự động
-                const eventsRes = await api.get('/events');
-                const nextReport = eventsRes.data
-                    .filter((ev: any) => ev.title.toLowerCase().includes('báo cáo') && dayjs(ev.startDate).isAfter(dayjs()))
-                    .sort((a: any, b: any) => dayjs(a.startDate).unix() - dayjs(b.startDate).unix())[0];
+            // 2. Lấy danh sách phòng chat
+            const chatRes = await api.get('/chat/rooms');
+            setRooms(chatRes.data.slice(0, 5)); 
 
-                if (nextReport) {
-                    setDeadline({
-                        days: dayjs(nextReport.startDate).diff(dayjs(), 'day'),
-                        date: dayjs(nextReport.startDate).format('DD/MM/YYYY')
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi tải dữ liệu Dashboard:", error);
-            } finally {
-                setLoading(false);
+            // 3. Lấy sự kiện
+            const eventsRes = await api.get('/events');
+            const eventList = Array.isArray(eventsRes.data) ? eventsRes.data : (eventsRes.data.data || []);
+            
+            const nextEvent = eventList
+                .filter((ev: any) => dayjs(ev.startDate).isAfter(dayjs())) 
+                .sort((a: any, b: any) => dayjs(a.startDate).unix() - dayjs(b.startDate).unix())[0];
+
+            if (nextEvent) {
+                setDeadline({
+                    days: dayjs(nextEvent.startDate).diff(dayjs(), 'day'),
+                    date: dayjs(nextEvent.startDate).format('DD/MM/YYYY'),
+                    title: nextEvent.title
+                });
             }
-        };
-
-        fetchDashboardData();
+        } catch (error) {
+            console.error("Dashboard error:", error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
+    useEffect(() => {
+        // Khởi tạo socket
+        socketRef.current = io('http://localhost:3000'); 
+
+        fetchDashboardData();
+
+        // Lắng nghe tin nhắn mới để cập nhật danh sách hội thoại real-time
+        socketRef.current.on('receiveMessage', (newMessage) => {
+            setRooms((prevRooms) => {
+                const roomIndex = prevRooms.findIndex(r => r.id === newMessage.roomId);
+                
+                if (roomIndex !== -1) {
+                    const updatedRooms = [...prevRooms];
+                    updatedRooms[roomIndex] = {
+                        ...updatedRooms[roomIndex],
+                        messages: [newMessage],
+                        updatedAt: new Date()
+                    };
+                    // Sắp xếp phòng mới nhất lên đầu
+                    return updatedRooms.sort((a, b) => dayjs(b.updatedAt).unix() - dayjs(a.updatedAt).unix());
+                } else {
+                    // Nếu là phòng chat mới hoàn toàn, load lại danh sách
+                    fetchDashboardData();
+                    return prevRooms;
+                }
+            });
+
+            if (newMessage.senderId !== currentUser.id) {
+                message.info(`Tin nhắn mới từ ${newMessage.sender.fullName}`);
+            }
+        });
+
+        return () => {
+            socketRef.current?.disconnect();
+        };
+    }, [fetchDashboardData, currentUser.id]);
+
     const getStatusStep = (status: string) => {
-        const steps: any = { 'PENDING': 0, 'APPROVED': 1, 'IN_PROGRESS': 2, 'SUBMITTED': 3, 'COMPLETED': 4 };
+        const steps: any = { 'PENDING': 0, 'APPROVED': 1, 'IN_PROGRESS': 2, 'COMPLETED': 4 };
         return steps[status] || 0;
     };
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" tip="Đang đồng bộ dữ liệu..." /></div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" tip="Đang đồng bộ..." /></div>;
 
     return (
         <div style={{ padding: '20px' }}>
-            {/* Header Dashboard */}
+            {/* Header */}
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
                     <Title level={3}>Bảng điều khiển Sinh viên</Title>
-                    <Paragraph type="secondary">Hệ thống tự động cập nhật lộ trình dựa trên dữ liệu thời gian thực.</Paragraph>
+                    <Paragraph type="secondary">Chào mừng bạn trở lại.</Paragraph>
                 </div>
-                <Badge count={recruitments.length} dot>
-                    <Button icon={<BellOutlined />} shape="circle" />
+                <Badge count={unreadNotis}>
+                    <Button icon={<BellOutlined />} shape="circle" onClick={() => navigate('/student/notifications')} />
                 </Badge>
             </div>
 
             <Row gutter={[24, 24]}>
-                {/* CỘT TRÁI: DỮ LIỆU ĐỀ TÀI CÁ NHÂN */}
                 <Col xs={24} lg={16}>
                     <Card
-                        title="Đề tài của tôi"
-                        extra={<Button type="link" onClick={() => navigate('/student/my-project')}>Chi tiết hồ sơ</Button>}
+                        title="Đề tài nghiên cứu"
+                        extra={<Button type="link" onClick={() => navigate('/student/my-project')}>Quản lý</Button>}
                         style={{ marginBottom: 24, borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
                     >
                         {project ? (
                             <Row align="middle" gutter={24}>
-                                <Col xs={24} sm={8} style={{ textAlign: 'center' }}>
-                                    <Progress
-                                        type="circle"
-                                        percent={project.progress || 0}
-                                        width={120}
-                                        strokeColor={{ '0%': '#108ee9', '100%': '#87d068' }}
-                                    />
+                                <Col xs={24} sm={6} style={{ textAlign: 'center' }}>
+                                    <Progress type="circle" percent={project.progress || 0} width={100} />
                                 </Col>
-                                <Col xs={24} sm={16}>
+                                <Col xs={24} sm={18}>
                                     <Title level={4}>{project.name}</Title>
-                                    <Space direction="vertical" size={0}>
-                                        <Text><Text strong>Hướng dẫn:</Text> {project.mentor?.fullName || 'Đang chờ phân công'}</Text>
-                                        <Text><Text strong>Trạng thái hệ thống:</Text> <Tag color="blue" style={{ marginLeft: 8 }}>{project.status}</Tag></Text>
-                                    </Space>
+                                    <Tag color="processing">{project.status}</Tag>
                                 </Col>
                             </Row>
                         ) : (
-                            <Empty description="Bạn hiện chưa tham gia đề tài nào trong kỳ này.">
-                                <Button type="primary" icon={<ProjectOutlined />} onClick={() => navigate('/student/my-project')}>Đăng ký đề tài mới</Button>
+                            <Empty description="Bạn chưa đăng ký đề tài nào.">
+                                <Button type="primary" onClick={() => navigate('/student/my-project')}>Bắt đầu ngay</Button>
                             </Empty>
                         )}
                     </Card>
 
-                    <Card title="Tiến độ thực hiện theo quy trình" style={{ borderRadius: '12px' }}>
-                        <Steps
-                            current={project ? getStatusStep(project.status) : -1}
-                            size="small"
-                            items={[
-                                { title: 'Đăng ký', icon: <FileSearchOutlined /> },
-                                { title: 'Duyệt', icon: <TeamOutlined /> },
-                                { title: 'Thực hiện', icon: <ProjectOutlined /> },
-                                { title: 'Báo cáo', icon: <FileProtectOutlined /> },
-                                { title: 'Kết thúc', icon: <CheckCircleOutlined /> },
-                            ]}
+                    {/* Chat List */}
+                    <Card 
+                        title={<span><MessageOutlined /> Tin nhắn chờ phản hồi</span>}
+                        style={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+                        bodyStyle={{ padding: '0 24px' }}
+                    >
+                        <List
+                            itemLayout="horizontal"
+                            dataSource={rooms}
+                            locale={{ emptyText: <Empty description="Không có tin nhắn" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                            renderItem={(room: any) => {
+                                const partner = room.user1Id === currentUser.id ? room.user2 : room.user1;
+                                const lastMsg = room.messages && room.messages[0];
+                                return (
+                                    <List.Item 
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => setActiveChat({ roomId: room.id, receiver: partner })}
+                                    >
+                                        <List.Item.Meta
+                                            avatar={
+                                                <Badge dot={lastMsg && !lastMsg.isRead && lastMsg.senderId !== currentUser.id}>
+                                                    <Avatar src={partner?.avatar}>{partner?.fullName?.charAt(0)}</Avatar>
+                                                </Badge>
+                                            }
+                                            title={<Text strong>{partner?.fullName}</Text>}
+                                            description={<Text ellipsis type="secondary">{lastMsg ? lastMsg.content : "..."}</Text>}
+                                        />
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                                            {lastMsg ? dayjs(lastMsg.createdAt).format('HH:mm') : ''}
+                                        </Text>
+                                    </List.Item>
+                                );
+                            }}
                         />
                     </Card>
                 </Col>
 
-                {/* CỘT PHẢI: KẾT NỐI VÀ DEADLINE */}
                 <Col xs={24} lg={8}>
-                    {/* Mục tìm đồng đội lấy từ CSDL Recruitment */}
                     <Card
-                        title={<span><FireOutlined style={{ color: '#ff4d4f' }} /> Tìm đồng đội thực tế</span>}
+                        title={<span><FireOutlined style={{ color: '#ff4d4f' }} /> Tuyển đồng đội</span>}
                         style={{ marginBottom: 24, borderRadius: '12px' }}
-                        extra={<Button type="link" onClick={() => navigate('/find-team')}>Tất cả</Button>}
+                        extra={<Button type="link" onClick={() => navigate('/student/recruitment')}>Tất cả</Button>}
                     >
                         <List
-                            itemLayout="horizontal"
                             dataSource={recruitments}
-                            locale={{ emptyText: "Không có yêu cầu ghép nhóm nào." }}
                             renderItem={(item: any) => (
-                                <List.Item actions={[<Button type="text" icon={<MessageOutlined />} />]}>
+                                <List.Item 
+                                    style={{ cursor: 'pointer', padding: '8px' }}
+                                    onClick={() => navigate(`/student/recruitment/${item.id}`)}
+                                >
                                     <List.Item.Meta
                                         avatar={<Avatar src={item.author?.avatar}>{item.author?.fullName[0]}</Avatar>}
                                         title={<Text strong>{item.title}</Text>}
-                                        description={<Text type="secondary" style={{ fontSize: '12px' }}>Bởi: {item.author?.fullName}</Text>}
                                     />
                                 </List.Item>
                             )}
                         />
-                        <Button block icon={<UserAddOutlined />} style={{ marginTop: 10 }} onClick={() => navigate('/find-team/create')}>
-                            Đăng tin tuyển quân
-                        </Button>
                     </Card>
 
-                    {/* Deadline tự động dựa trên bảng Events */}
-                    <Card style={{ borderRadius: '12px', textAlign: 'center', background: deadline && deadline.days < 7 ? '#fff1f0' : '#fff' }}>
+                    <Card style={{ borderRadius: '12px', textAlign: 'center' }}>
                         <Statistic
-                            title="Hạn nộp báo cáo tiếp theo"
+                            title={deadline ? deadline.title : "Sự kiện"}
                             value={deadline ? deadline.days : '--'}
                             suffix="ngày"
-                            valueStyle={{ color: deadline && deadline.days < 7 ? '#cf1322' : '#3f8600', fontWeight: 'bold' }}
                         />
-                        <Text type="secondary">Hạn chót: {deadline ? deadline.date : 'Chưa có lịch'}</Text>
                     </Card>
                 </Col>
             </Row>
+
+            {activeChat && (
+                <ChatWindow 
+                    roomId={activeChat.roomId}
+                    currentUser={currentUser}
+                    receiver={activeChat.receiver}
+                    onClose={() => {
+                        setActiveChat(null);
+                        fetchDashboardData(); 
+                    }}
+                />
+            )}
         </div>
     );
 };
