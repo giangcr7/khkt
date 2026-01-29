@@ -21,15 +21,27 @@ model User {
   role     Role    @default(STUDENT)
   isActive Boolean @default(true)
 
-  // Quan hệ
+  // Quan hệ dự án
   ownedProjects    Project[]       @relation("StudentProjects")
   mentoredProjects Project[]       @relation("MentorProjects")
   projectMembers   ProjectMember[]
+  
+  // Quan hệ nội dung & thông báo
   posts            Post[]
   notifications    Notification[]
 
-  // SỬA TẠI ĐÂY: Chỉ giữ lại một quan hệ đến Recruitment
-  recruitments Recruitment[] @relation("UserRecruitments")
+  // TUYỂN DỤNG & ỨNG TUYỂN
+  recruitments     Recruitment[]        @relation("UserRecruitments")
+  applications     Application[]        @relation("UserApplications")
+  
+  // Module bổ trợ
+  recruitmentComments RecruitmentComment[]
+  activityLogs        ActivityLog[]
+
+  // --- HỆ THỐNG CHAT ---
+  sentMessages     Message[]            @relation("SentMessages")
+  roomsAsUser1     ChatRoom[]           @relation("User1Rooms")
+  roomsAsUser2     ChatRoom[]           @relation("User2Rooms")
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -38,13 +50,13 @@ model User {
 /////////////////////////////////////////////////
 // PROJECT CORE
 /////////////////////////////////////////////////
+
 model Project {
   id          Int           @id @default(autoincrement())
   name        String
   description String?       @db.Text
   status      ProjectStatus @default(PENDING)
 
-  // Thay vì dùng String, ta dùng quan hệ với bảng Topic
   topicId Int?
   topic   Topic? @relation(fields: [topicId], references: [id])
 
@@ -71,10 +83,6 @@ model Project {
   updatedAt DateTime @updatedAt
 }
 
-/////////////////////////////////////////////////
-// PROJECT MEMBERS (NHÓM NGHIÊN CỨU)
-/////////////////////////////////////////////////
-
 model ProjectMember {
   id        Int        @id @default(autoincrement())
   projectId Int
@@ -89,10 +97,6 @@ model ProjectMember {
   @@unique([projectId, userId])
 }
 
-/////////////////////////////////////////////////
-// PROJECT PROGRESS (TIẾN ĐỘ)
-/////////////////////////////////////////////////
-
 model ProjectProgress {
   id        Int     @id @default(autoincrement())
   projectId Int
@@ -100,10 +104,8 @@ model ProjectProgress {
   content   String? @db.Text
   percent   Int
 
-  // --- THÊM TRƯỜNG NÀY ---
-  fileUrl  String? // Đường dẫn file minh chứng (S3, Cloudinary hoặc Local)
-  fileName String? // Tên file để hiển thị ở giao diện
-  // --------------------
+  fileUrl  String? 
+  fileName String? 
 
   feedback  String?  @db.Text
   project   Project  @relation(fields: [projectId], references: [id])
@@ -111,8 +113,121 @@ model ProjectProgress {
 }
 
 /////////////////////////////////////////////////
-// CMS - POSTS
+// TÌM ĐỒNG ĐỘI (ONLINE MATCHING)
 /////////////////////////////////////////////////
+
+model Recruitment {
+  id           Int      @id @default(autoincrement())
+  title        String 
+  content      String   @db.Text
+  skills       String[] 
+  targetAmount Int      @default(1)
+
+  status RecruitmentStatus @default(OPEN)
+
+  authorId Int
+  author   User @relation("UserRecruitments", fields: [authorId], references: [id])
+
+  applications Application[]
+  comments     RecruitmentComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Application {
+  id            Int               @id @default(autoincrement())
+  content       String?           @db.Text 
+  status        ApplicationStatus @default(PENDING)
+  adminFeedback String?           @db.Text 
+
+  recruitmentId Int
+  recruitment   Recruitment       @relation(fields: [recruitmentId], references: [id])
+  
+  userId        Int
+  user          User              @relation("UserApplications", fields: [userId], references: [id])
+
+  createdAt     DateTime          @default(now())
+
+  @@unique([recruitmentId, userId]) 
+}
+
+model RecruitmentComment {
+  id            Int      @id @default(autoincrement())
+  content       String   @db.Text
+  
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  
+  recruitmentId Int
+  recruitment   Recruitment @relation(fields: [recruitmentId], references: [id])
+
+  createdAt     DateTime @default(now())
+}
+
+/////////////////////////////////////////////////
+// HỆ THỐNG CHAT REAL-TIME (MỚI)
+/////////////////////////////////////////////////
+
+model ChatRoom {
+  id        Int       @id @default(autoincrement())
+  
+  user1Id   Int
+  user1     User      @relation("User1Rooms", fields: [user1Id], references: [id])
+  
+  user2Id   Int
+  user2     User      @relation("User2Rooms", fields: [user2Id], references: [id])
+
+  messages  Message[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Đảm bảo giữa 2 sinh viên chỉ có duy nhất 1 phòng chat
+  @@unique([user1Id, user2Id]) 
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text
+  
+  senderId   Int
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  roomId     Int
+  room       ChatRoom @relation(fields: [roomId], references: [id])
+  
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+/////////////////////////////////////////////////
+// HỆ THỐNG PHỤ TRỢ
+/////////////////////////////////////////////////
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  action    String   
+  details   String?  @db.Text
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id      Int     @id @default(autoincrement())
+  title   String? 
+  content String
+  link    String? 
+  isRead  Boolean @default(false)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
 
 model Post {
   id           Int     @id @default(autoincrement())
@@ -127,15 +242,20 @@ model Post {
   authorId Int
   author   User @relation(fields: [authorId], references: [id])
 
+  topicId   Int?
+  topic     Topic?   @relation(fields: [topicId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  topic     Topic?   @relation(fields: [topicId], references: [id])
-  topicId   Int?
 }
 
-/////////////////////////////////////////////////
-// RESOURCES (KHO TÀI LIỆU)
-/////////////////////////////////////////////////
+model Topic {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  projects  Project[]
+  posts     Post[] 
+  createdAt DateTime  @default(now())
+}
 
 model Resource {
   id          Int          @id @default(autoincrement())
@@ -147,51 +267,18 @@ model Resource {
   createdAt DateTime @default(now())
 }
 
-/////////////////////////////////////////////////
-// EVENTS (TIMELINE NCKH)
-/////////////////////////////////////////////////
-
 model Event {
   id          Int       @id @default(autoincrement())
-  title       String // VD: "Hạn chót nộp thuyết minh đề tài"
+  title       String 
   description String?   @db.Text
-  startDate   DateTime // Ngày bắt đầu/Ngày diễn ra
-  endDate     DateTime? // Ngày kết thúc (nếu là một giai đoạn)
+  startDate   DateTime 
+  endDate     DateTime? 
   isImportant Boolean   @default(false)
 
-  // --- BỔ SUNG THÊM ---
-  fileUrl  String? // Link tải file mẫu (Word, PDF...)
-  fileName String? // Tên file hiển thị
-  // --------------------
+  fileUrl  String? 
+  fileName String? 
 
   createdAt DateTime @default(now())
-}
-
-/////////////////////////////////////////////////
-// NOTIFICATIONS (TỐI ƯU)
-/////////////////////////////////////////////////
-model Notification {
-  id      Int     @id @default(autoincrement())
-  title   String? // VD: "Đề tài được duyệt"
-  content String
-  link    String? // VD: "/student/my-project"
-  isRead  Boolean @default(false)
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-/////////////////////////////////////////////////
-// TOPIC (LĨNH VỰC)
-/////////////////////////////////////////////////
-model Topic {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  projects  Project[]
-  posts     Post[] // Nếu bạn muốn phân loại bài viết theo lĩnh vực
-  createdAt DateTime  @default(now())
 }
 
 model Faq {
@@ -202,49 +289,17 @@ model Faq {
   updatedAt DateTime @updatedAt
 }
 
-/////////////////////////////////////////////////
-// DỮ LIỆU ĐỘNG CHO CẨM NANG (GUIDE)
-/////////////////////////////////////////////////
-
 model ResearchGuide {
   id        Int     @id @default(autoincrement())
   mainTitle String
   subTitle  String? @db.Text
 
-  // Lưu trữ cấu trúc phức tạp (Giai đoạn, Công cụ, Kỹ năng) dưới dạng JSON
-  // Phù hợp để thay đổi số lượng các bước mà không cần sửa code
   steps  Json
   tools  Json
   skills Json
 
   isActive  Boolean  @default(true)
   updatedAt DateTime @updatedAt
-}
-
-/////////////////////////////////////////////////
-// TÌM ĐỒNG ĐỘI (RECRUITMENT) - YC 13 & 87
-/////////////////////////////////////////////////
-
-model Recruitment {
-  id      Int      @id @default(autoincrement())
-  title   String // VD: "Tìm 2 bạn mảng IoT cho đề tài nhà thông minh"
-  content String   @db.Text
-  skills  String[] // Các thẻ kỹ năng để lọc
-
-  status RecruitmentStatus @default(OPEN)
-
-  // SỬA TẠI ĐÂY: Xóa trường userId thừa, chỉ dùng authorId
-  authorId Int
-  author   User @relation("UserRecruitments", fields: [authorId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-}
-
-enum RecruitmentStatus {
-  OPEN
-  CLOSED
 }
 
 /////////////////////////////////////////////////
@@ -280,4 +335,15 @@ enum PostType {
   NEWS
   GUIDE
   ANNOUNCEMENT
+}
+
+enum RecruitmentStatus {
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

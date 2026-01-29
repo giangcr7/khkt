@@ -17,6 +17,8 @@ import { FaqsModule } from './modules/faqs/faqs.module';
 // --- 1. IMPORT GUIDEMODULE ---
 import { GuideModule } from './modules/guide/guide.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RecruitmentModule } from './recruitment/recruitment.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     FaqsModule,
     GuideModule,
     NotificationsModule,
+    RecruitmentModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
