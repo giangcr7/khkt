@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PostType } from '@prisma/client';
 
 export class CreatePostDto {
@@ -10,10 +10,8 @@ export class CreatePostDto {
     @IsString()
     content?: string;
 
-    // THAY ĐỔI: Thumbnail bây giờ bắt buộc phải là định dạng URL hợp lệ 
-    // nhận được từ API /upload trước đó
     @IsOptional()
-    @IsUrl({}, { message: 'Thumbnail phải là một đường dẫn URL hợp lệ' })
+    @IsString() // Dùng IsString thay vì IsUrl để tránh lỗi với chuỗi rỗng hoặc link nội bộ
     thumbnail?: string;
 
     @IsOptional()
@@ -24,7 +22,6 @@ export class CreatePostDto {
     @IsEnum(PostType, { message: 'Loại bài viết không hợp lệ' })
     type: PostType;
 
-    // Bổ sung authorId để xác định người đăng (theo schema Prisma của bạn)
-    @IsNotEmpty()
-    authorId: number;
+    // XOÁ authorId ở đây! 
+    // Vì authorId lấy từ req.user trong Controller, không phải từ Body gửi lên.
 }

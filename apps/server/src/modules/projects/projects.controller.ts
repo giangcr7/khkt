@@ -3,7 +3,6 @@ import {
     Param, ParseIntPipe, Delete
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-// SỬA TẠI ĐÂY: Đảm bảo tên file là jwt-auth.guard (khớp với file bạn đã gửi)
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -15,15 +14,11 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
 @ApiTags('Projects')
-@ApiBearerAuth() // Thêm để Swagger hiện nút khóa
+@ApiBearerAuth() 
 @Controller('projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
     constructor(private readonly projectsService: ProjectsService) { }
-
-    // ==========================================
-    // 1. PUBLIC ROUTES (Không cần Token)
-    // ==========================================
 
     @Public()
     @Get('stats')
@@ -141,5 +136,34 @@ export class ProjectsController {
     @Roles(Role.STUDENT)
     remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
         return this.projectsService.remove(id, req.user.userId);
+    }
+    // ==========================================
+    // QUẢN LÝ CHỦ ĐỀ (TOPICS)
+    // ==========================================
+// 👇 THÊM ĐOẠN NÀY VÀO ĐỂ NHẬN YÊU CẦU TẠO MỚI 👇
+    @Post('topics')
+    @Roles(Role.ADMIN, Role.LECTURER) // Chỉ Admin hoặc Giảng viên mới được tạo chủ đề (hoặc tùy logic của bạn)
+    @ApiOperation({ summary: 'Tạo mới chủ đề nghiên cứu' })
+    createTopic(@Body() body: { name: string; description?: string }) {
+        // Gọi sang service để lưu vào Database
+        return this.projectsService.createTopic(body); 
+    }
+    // 1. SỬA CHỦ ĐỀ (UPDATE)
+    @Patch('topics/:id')
+    @Roles(Role.ADMIN, Role.LECTURER) // Thường chỉ có Admin hoặc Giảng viên mới được sửa
+    @ApiOperation({ summary: 'Cập nhật thông tin chủ đề' })
+    updateTopic(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { name?: string; description?: string }
+    ) {
+        return this.projectsService.updateTopic(id, body);
+    }
+
+    // 2. XÓA CHỦ ĐỀ (DELETE)
+    @Delete('topics/:id')
+    @Roles(Role.ADMIN, Role.LECTURER) 
+    @ApiOperation({ summary: 'Xóa chủ đề' })
+    deleteTopic(@Param('id', ParseIntPipe) id: number) {
+        return this.projectsService.deleteTopic(id);
     }
 }

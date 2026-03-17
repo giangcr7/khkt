@@ -1,21 +1,24 @@
-import { Controller, Get, Post, Body, UploadedFile, UseInterceptors, Delete, Param, ParseIntPipe, UseGuards, Query, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, UploadedFile, UseInterceptors, Delete, Param, ParseIntPipe, UseGuards, Query, Patch, BadRequestException } from '@nestjs/common';
 import { ResourcesService } from './resources.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role, ResourceType } from '@prisma/client';
 import { ApiTags, ApiConsumes } from '@nestjs/swagger';
-import { Public } from '../auth/decorators/public.decorator'; // Đảm bảo đã có decorator này
+import { Public } from '../auth/decorators/public.decorator';
+import { UploadService } from 'src/upload/upload.service';
 
 @ApiTags('Resources')
 @Controller('resources')
 export class ResourcesController {
-  constructor(private readonly resourcesService: ResourcesService) { }
+  // Tiêm (Inject) thêm UploadService vào constructor
+  constructor(
+    private readonly resourcesService: ResourcesService,
+    private readonly uploadService: UploadService 
+  ) { }
 
-  // 1. Xem danh sách (CÔNG KHAI - Cho phép trang chủ truy cập)
+  // 1. Xem danh sách (CÔNG KHAI)
   @Public()
   @Get()
   findAll(@Query('type') type?: ResourceType) {
@@ -27,32 +30,30 @@ export class ResourcesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = extname(file.originalname);
-        callback(null, `resource-${uniqueSuffix}${ext}`);
-      },
-    }),
-    limits: { fileSize: 20 * 1024 * 1024 } // Tăng lên 20MB cho tài liệu/video nhỏ
+    // XOÁ diskStorage ĐI. Mặc định Multer sẽ lưu file vào Buffer (RAM) để stream lên Cloud
+    limits: { fileSize: 20 * 1024 * 1024 } 
   }))
   @ApiConsumes('multipart/form-data')
-  create(
+  async create( // Nhớ thêm async vì gọi Cloudinary mất thời gian
     @Body() body: { title: string; type: ResourceType; link?: string; description?: string },
     @UploadedFile() file: Express.Multer.File
   ) {
-    const finalUrl = file ? `/uploads/${file.filename}` : body.link;
+    let finalUrl = body.link; // Mặc định là link video nếu có
+
+    // Nếu có file tải lên, đẩy thẳng lên Cloudinary
+    if (file) {
+      finalUrl = await this.uploadService.save(file, 'resources'); 
+    }
 
     if (!finalUrl) {
-      throw new Error('Bạn phải upload file hoặc nhập link video!');
+      throw new BadRequestException('Bạn phải upload file hoặc nhập link video!');
     }
 
     return this.resourcesService.create({
       title: body.title,
       type: body.type,
       description: body.description,
-      fileUrl: finalUrl
+      fileUrl: finalUrl // Lúc này finalUrl là link https://res.cloudinary...
     });
   }
 
@@ -61,25 +62,18 @@ export class ResourcesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = extname(file.originalname);
-        callback(null, `update-res-${uniqueSuffix}${ext}`);
-      },
-    }),
+    limits: { fileSize: 20 * 1024 * 1024 }
   }))
-  update(
+  async update( // Thêm async
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { title?: string; type?: ResourceType; link?: string; description?: string },
     @UploadedFile() file: Express.Multer.File
   ) {
-    let newUrl: string | undefined = undefined;
+    let newUrl: string | undefined = body.link;
+
+    // Nếu User có chọn file mới để upload
     if (file) {
-      newUrl = `/uploads/${file.filename}`;
-    } else if (body.link) {
-      newUrl = body.link;
+      newUrl = await this.uploadService.save(file, 'resources'); // Đẩy lên mây
     }
 
     return this.resourcesService.update(id, {

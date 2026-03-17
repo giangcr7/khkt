@@ -15,10 +15,10 @@ import { StatsModule } from './modules/stats/stats.module';
 import { EventsModule } from './modules/events/events.module';
 import { FaqsModule } from './modules/faqs/faqs.module';
 // --- 1. IMPORT GUIDEMODULE ---
-import { GuideModule } from './modules/guide/guide.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RecruitmentModule } from './recruitment/recruitment.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -44,10 +44,10 @@ import { ChatModule } from './modules/chat/chat.module';
     StatsModule,
     EventsModule,
     FaqsModule,
-    GuideModule,
     NotificationsModule,
     RecruitmentModule,
     ChatModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],

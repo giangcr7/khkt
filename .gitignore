@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+build/
+
+# Môi trường (KHÔNG BAO GIỜ UP FILE NÀY)
+.env
+.env.local
+
+# Python & AI
+__pycache__/
+venv/
+env/
+*.pyc
+
+# OS
+.DS_Store

@@ -1,0 +1,236 @@
+{
+  "intents": [
+    {
+      "tag": "ngoai_le",
+      "patterns": [
+        "đăng ký tín chỉ ở đâu", "đăng ký tín chỉ môn triết học mác lênin", "thời tiết hôm nay thế nào", "mấy giờ trường đóng cửa", 
+        "giá tiền một tín chỉ là bao nhiêu", "lịch thi cuối kỳ xem ở đâu", "bạn ăn cơm chưa", "điểm chuẩn ngành công nghệ thông tin",
+        "làm sao để đăng ký nội trú", "nộp học phí qua ngân hàng nào", "mật khẩu wifi của trường là gì", "xin chào", "hello"
+      ],
+      "responses": [
+        "Xin lỗi, mình là Chatbot chuyên trách hỗ trợ Nghiên cứu khoa học sinh viên. Vấn đề bạn hỏi nằm ngoài phạm vi dữ liệu của mình. Bạn vui lòng liên hệ Phòng Đào tạo hoặc Phòng Công tác sinh viên nhé!"
+      ]
+    },
+    {
+      "tag": "nckh_khai_niem",
+      "patterns": [
+        "NCKH sinh viên là gì?", "nghiên cứu khoa học là làm gì", "khái niệm nckh", "làm nckh là làm những cái gì",
+        "định nghĩa nghiên cứu khoa học", "thế nào là nckh sinh viên", "mục đích làm nckh", "nckh sv là viết tắt của từ gì",
+        "nckh la cai veo gi", "tu nhien bat lam nckh de lam gi", "nckh la cai chi chi", "khong hieu nckh la lam gi"
+      ],
+      "responses": [
+        "Nghiên cứu khoa học sinh viên (NCKH SV) là hoạt động học thuật mà trong đó, sinh viên vận dụng kiến thức đã học và phương pháp luận khoa học để tìm tòi, khám phá, thử nghiệm hoặc giải quyết một vấn đề cụ thể. Quá trình này thường được thực hiện dưới sự hướng dẫn của một giảng viên."
+      ]
+    },
+    {
+      "tag": "nckh_tinh_bat_buoc",
+      "patterns": [
+        "Tham gia NCKH có bắt buộc không?", "không làm nckh có sao không", "trường có ép sinh viên làm nckh không", "bắt buộc phải tham gia nghiên cứu khoa học à",
+        "quy định bắt buộc làm nckh", "sinh viên có bắt buộc làm đề tài không", "không tham gia nghiên cứu khoa học có ra trường được không", "nckh là tự nguyện hay bắt buộc",
+        "hong lam nghien cuu khoa hoc co bi cam thi khong", "ko làm nckh có sao k", "lười làm nckh có bị đuổi học không", "trốn làm nckh được ko", "bùng nckh có sao k"
+      ],
+      "responses": [
+        "Việc tham gia NCKH không phải là hoạt động bắt buộc đối với sinh viên. Tuy nhiên, nhà trường luôn khuyến khích sinh viên tích cực tham gia để phát triển tư duy nghiên cứu, nâng cao kiến thức chuyên môn và rèn luyện kỹ năng."
+      ]
+    },
+    {
+      "tag": "nckh_thanh_vien_nhom",
+      "patterns": [
+        "Một đề tài NCKH tối đa bao nhiêu thành viên?", "nhóm nckh mấy người", "mấy người một nhóm nghiên cứu", "làm nckh một mình được không",
+        "quy định số lượng thành viên nhóm", "1 nhóm nckh gồm tối đa bao nhiêu sinh viên", "có được làm nckh 6 người không", "số lượng người trong 1 đề tài",
+        "1 nhom lam nckh toi da dc may mang", "solo 1 mình được không", "gánh team 1 mình dc k", "làm 1 mình có được duyệt không", "tìm đồng đội làm nckh"
+      ],
+      "responses": [
+        "Mỗi đề tài NCKH sinh viên không quá 05 sinh viên tham gia, trong đó phải có 01 sinh viên chịu trách nhiệm chính và 01 hoặc 2 giảng viên hướng dẫn."
+      ]
+    },
+    {
+      "tag": "nckh_nam_nhat",
+      "patterns": [
+        "Sinh viên năm nhất có được tham gia NCKH không?", "năm 1 làm nckh được không", "mới vào trường có được nghiên cứu khoa học không", "sinh viên năm nhất tham gia được không",
+        "k59 có được làm nckh chưa", "sinh viên k64 năm nhất làm nckh", "điều kiện tham gia nckh cho tân sinh viên", "năm đầu tiên học đại học làm nckh được không",
+        "k65 moi vao truong co duoc lam khong", "chiếu mới năm nhất có đc làm k", "tân sinh viên k66 nckh", "năm 1 ngơ ngơ chưa biết gì làm được không"
+      ],
+      "responses": [
+        "Tất cả sinh viên đang học tại trường đều có thể tham gia. Vì vậy, sinh viên năm nhất hoàn toàn có thể tham gia NCKH. Tuy nhiên do chưa có nhiều kiến thức chuyên ngành, sinh viên năm nhất thường tham gia với vai trò thành viên trong nhóm để học hỏi."
+      ]
+    },
+    {
+      "tag": "nckh_loi_ich",
+      "patterns": [
+        "Làm NCKH có lợi ích gì cho sinh viên?", "quyền lợi khi tham gia nghiên cứu khoa học", "làm nckh được gì", "tại sao nên làm nghiên cứu khoa học",
+        "sinh viên được gì khi làm đề tài", "có được cộng điểm rèn luyện không", "làm nckh có lợi cho xin việc không", "những lợi ích của nghiên cứu khoa học", 
+        "giải thưởng nckh được bao nhiêu tiền", "được cộng điểm gì khi làm nckh",
+        "lam cai nay co duoc cong diem ren luyen hay tien thuong gi khong", "húp giải nckh được bao nhiêu lúa", "tiền tươi thóc thật từ nckh", "có được cộng điểm qua môn không", "làm xong thì được cái nịt gì"
+      ],
+      "responses": [
+        "Tham gia NCKH mang lại nhiều lợi ích: (1) Nâng cao giá trị hồ sơ cá nhân (CV); (2) Hỗ trợ định hướng học thuật (Thạc sĩ, Tiến sĩ); (3) Phát triển kỹ năng toàn diện (làm việc nhóm, thuyết trình); (4) Nhận kinh phí hỗ trợ, giấy chứng nhận và cộng điểm rèn luyện."
+      ]
+    },
+    {
+      "tag": "nckh_chon_de_tai",
+      "patterns": [
+        "Làm sao để chọn được đề tài NCKH phù hợp?", "cách chọn đề tài nckh", "tiêu chí chọn đề tài là gì", "nên chọn đề tài như thế nào",
+        "kinh nghiệm chọn đề tài nghiên cứu", "hướng dẫn chọn chủ đề nckh", "làm sao biết đề tài này hợp với mình", "chọn tên đề tài sao cho đúng",
+        "chọn đề tài nào cho dễ ăn", "đề tài nào ít khoai", "né mấy đề tài khó ntn", "đề tài dễ pass nhất", "xin thầy gợi ý đề tài"
+      ],
+      "responses": [
+        "Để chọn được đề tài NCKH phù hợp, bạn nên ưu tiên: Liên quan đến chuyên ngành đang học, có nguồn tài liệu tham khảo, có khả năng thu thập dữ liệu thực tế, và có tính mới/ứng dụng. Bạn cũng nên trao đổi với giảng viên để xác định phạm vi phù hợp."
+      ]
+    },
+    {
+      "tag": "nckh_tim_y_tuong",
+      "patterns": [
+        "làm sao để tìm ý tưởng đề tài NCKH khi chưa có định hướng rõ ràng?", "bí ý tưởng nckh thì làm sao", "tìm ý tưởng nghiên cứu ở đâu", "không biết làm đề tài gì",
+        "cách lên ý tưởng viết bài", "gợi ý cách chọn chủ đề nghiên cứu", "tìm hướng đi cho đề tài nckh như thế nào", "nguồn tham khảo ý tưởng nckh",
+        "bi y tuong qua thi tim huong di o dau", "tắc ý tưởng rồi", "bí lù", "lủng não không nghĩ ra đề tài", "xin idea nckh", "cạn ý tưởng thì phải làm sao"
+      ],
+      "responses": [
+        "Bạn có thể tìm ý tưởng bằng cách: Đọc các bài báo khoa học, quan sát thực tiễn ngành học, tham khảo ý kiến giảng viên hướng dẫn, hoặc tra cứu tài liệu trên Google Scholar."
+      ]
+    },
+    {
+      "tag": "nckh_thay_doi_de_tai",
+      "patterns": [
+        "Nếu đề tài ban đầu quá khó thì có thể thay đổi trong quá trình nghiên cứu không?", "xin đổi tên đề tài được không", "làm giữa chừng muốn đổi đề tài khác", "đổi đề tài nckh",
+        "thủ tục xin đổi tên đề tài", "hướng dẫn đổi đề tài nghiên cứu", "thấy khó quá xin hủy hoặc đổi đề tài được không", "chuyển hướng nghiên cứu sang mảng khác",
+        "dang lam giua chung ma thay chua qua xin doi de tai khac dc ko", "quay xe đổi đề tài", "toang rồi đổi tên đề tài được không", "hủy đề tài ntn", "chọn nhầm đề tài khoai quá đổi đc k"
+      ],
+      "responses": [
+        "Quy định không nêu rõ việc thay đổi đề tài. Tuy nhiên, nếu đề tài quá khó hoặc cần điều chỉnh phạm vi, sinh viên nên lập tức trao đổi với giảng viên hướng dẫn để được xem xét và điều chỉnh phù hợp với đơn vị chuyên môn."
+      ]
+    },
+    {
+      "tag": "nckh_tham_khao_khoa_truoc",
+      "patterns": [
+        "Có thể tham khảo đề tài của các anh chị khóa trước không?", "xem báo cáo cũ ở đâu", "đọc tham khảo khóa luận cũ", "mượn đề tài năm trước xem được không",
+        "tìm nguồn đề tài tham khảo từ các năm trước", "có được lấy bài của sinh viên khóa trên xem không", "cách tìm đọc tài liệu cũ của trường", "xin file nckh mẫu của khóa trước",
+        "xin file bao cao cua may anh chi khoa truoc de cop nhat duoc khong", "xin xỏ khóa luận khóa trên", "bếnh nguyên bài khóa trước", "mượn bài cũ xào lại", "copy bài của k trước được k"
+      ],
+      "responses": [
+        "Sinh viên hoàn toàn có thể tham khảo đề tài của các khóa trước để hiểu cách xây dựng và phương pháp nghiên cứu. Tuy nhiên, bạn phải đảm bảo tính trung thực và tuyệt đối không sao chép nội dung."
+      ]
+    },
+    {
+      "tag": "nckh_gioi_han_pham_vi",
+      "patterns": [
+        "Một đề tài NCKH sinh viên nên giới hạn phạm vi nghiên cứu như thế nào?", "phạm vi nghiên cứu là gì", "cách xác định phạm vi đề tài", "giới hạn đề tài",
+        "thu hẹp phạm vi nghiên cứu", "đề tài quá rộng thì phải làm sao", "viết phạm vi nghiên cứu như thế nào cho đúng", "không biết xác định phạm vi đối tượng nghiên cứu",
+        "đề tài lan man quá", "thu hẹp lại kiểu gì", "nghiên cứu rộng quá sợ làm không nổi", "gút lại phạm vi ntn", "chốt hạ phạm vi"
+      ],
+      "responses": [
+        "Quy định không nêu cụ thể cách giới hạn. Tuy nhiên, đề tài NCKH cần được thực hiện dưới sự hướng dẫn của giảng viên. Vì vậy, bạn nên trao đổi trực tiếp với giảng viên hướng dẫn để xác định phạm vi vừa sức và khả thi."
+      ]
+    },
+    {
+      "tag": "nckh_tinh_sang_tao",
+      "patterns": [
+        "Làm sao để biết đề tài của em có tính sáng tạo và ứng dụng thực tế?", "thế nào là một đề tài sáng tạo", "tính ứng dụng của đề tài", "đề tài như thế nào là mới",
+        "tính cấp thiết và mới mẻ của đề tài", "tiêu chí đánh giá sự sáng tạo của nckh", "làm sao biết đề tài chưa có ai làm", "tính thực tiễn của nghiên cứu khoa học",
+        "sợ đụng hàng", "trùng idea với nhóm khác", "đề tài cũ xì có được duyệt không", "làm sao biết có người làm rồi", "check trùng ý tưởng"
+      ],
+      "responses": [
+        "Một đề tài được xem là có tính sáng tạo và ứng dụng khi nó giải quyết được một vấn đề mới chưa ai làm, hoặc đề xuất được một giải pháp khả thi có thể áp dụng trực tiếp vào thực tế xã hội."
+      ]
+    },
+    {
+      "tag": "nckh_buoc_dau_tien",
+      "patterns": [
+        "Nên bắt đầu đề tài nghiên cứu khoa học từ bước nào đầu tiên?", "bắt đầu làm nckh từ đâu", "bước 1 khi làm nghiên cứu là gì", "muốn làm nckh thì bắt đầu thế nào",
+        "người mới làm nckh thì bắt đầu từ việc gì", "các bước chuẩn bị ban đầu cho đề tài", "đăng ký nckh xong thì làm gì tiếp theo", "quy trình bắt đầu một đề tài",
+        "bắt đầu từ con số 0", "mù tịt không biết bắt đầu từ đâu", "newbie làm nckh bước 1 làm gì", "chưa biết gì thì start ntn"
+      ],
+      "responses": [
+        "Bước đầu tiên là xác định ý tưởng và lựa chọn đề tài phù hợp. Sau đó, bạn cần tìm hiểu tổng quan tài liệu để xác định mục tiêu. Cuối cùng, tiến hành đăng ký đề tài với giảng viên hướng dẫn và Khoa."
+      ]
+    },
+    {
+      "tag": "nckh_cac_giai_doan",
+      "patterns": [
+        "Một đề tài NCKH thường trải qua những giai đoạn nào?", "Các bước cơ bản để thực hiện một đề tài nghiên cứu khoa học là gì?", "quy trình làm nckh", "các bước làm nghiên cứu",
+        "timeline làm nghiên cứu khoa học", "các mốc thời gian cần nhớ khi làm nckh", "kế hoạch triển khai đề tài", "tổng quan các bước từ lúc đăng ký đến lúc bảo vệ",
+        "deadline nckh", "chạy deadline mốc thời gian nckh", "lịch trình từ a đến z", "các bước cơ bản", "có những mốc nào quan trọng"
+      ],
+      "responses": [
+        "Quá trình thực hiện thường qua 4 giai đoạn: (1) Đăng ký và giao đề tài; (2) Triển khai thực hiện (lập kế hoạch, thu thập dữ liệu); (3) Hoàn thiện báo cáo tổng kết; (4) Đánh giá và nghiệm thu trước hội đồng cấp Khoa/Trường."
+      ]
+    },
+    {
+      "tag": "nckh_de_cuong",
+      "patterns": [
+        "Làm sao để xây dựng đề cương nghiên cứu khoa học?", "viết đề cương nckh như thế nào", "cách lập đề cương", "đề cương nghiên cứu gồm những gì",
+        "xin mẫu đề cương nghiên cứu", "hướng dẫn viết thuyết minh đề cương", "cấu trúc chuẩn của một đề cương nckh", "cần chuẩn bị gì cho phần đề cương chi tiết",
+        "xin form mẫu đề cương", "chém gió phần đề cương ntn", "thuyết minh đề tài viết kiểu gì", "khung đề cương sơ bộ"
+      ],
+      "responses": [
+        "Sau khi đề tài được đăng ký, việc xây dựng đề cương (kế hoạch và nội dung nghiên cứu) cần được thực hiện thông qua sự trao đổi và hướng dẫn trực tiếp của giảng viên phụ trách đề tài."
+      ]
+    },
+    {
+      "tag": "nckh_luu_y_thuc_hien",
+      "patterns": [
+        "Khi thực hiện đề tài nghiên cứu khoa học, sinh viên cần lưu ý những vấn đề gì?", "những điều cấm kỵ khi làm nckh", "lưu ý quan trọng khi nghiên cứu",
+        "có cần báo cáo tiến độ không", "đạo văn bị xử lý thế nào", "quy định về đạo văn và sao chép", "các lỗi hay gặp khi làm nckh", "check đạo văn như thế nào",
+        "đạo văn bị xử sao", "copy paste có bị bế không", "fake số liệu có sao không", "dính phốt đạo văn", "chép mạng bị đình chỉ không", "quay cóp số liệu"
+      ],
+      "responses": [
+        "Sinh viên cần bảo đảm tính trung thực, tránh đạo văn, tuân thủ nghiêm ngặt quy định về trích dẫn tài liệu tham khảo, và quan trọng nhất là phải thường xuyên báo cáo tiến độ với giảng viên hướng dẫn."
+      ]
+    },
+    {
+      "tag": "nckh_cau_truc_bao_cao",
+      "patterns": [
+        "Cấu trúc của một bài NCKH gồm những phần nào?", "bài báo cáo nckh có mấy phần", "bố cục bài nghiên cứu", "cách chia mục trong bài báo cáo",
+        "form chuẩn của báo cáo tổng kết nckh", "quy định format trình bày bài nckh", "cấu trúc tiểu luận nghiên cứu khoa học", "dàn ý của một bài báo cáo khoa học",
+        "dàn ý form chuẩn", "cách làm mục lục", "cấu trúc bài tiểu luận nckh", "viết mấy chương là đủ"
+      ],
+      "responses": [
+        "Một bài NCKH thường gồm các phần: (1) Phần mở đầu; (2) Tổng quan nghiên cứu (Cơ sở lý thuyết); (3) Phương pháp nghiên cứu; (4) Kết quả nghiên cứu và thảo luận; (5) Kết luận và kiến nghị; (6) Tài liệu tham khảo."
+      ]
+    },
+    {
+      "tag": "nckh_phan_mo_dau",
+      "patterns": [
+        "Làm sao để viết phần mở đầu của bài NCKH rõ ràng và thuyết phục?", "cách viết mở đầu báo cáo", "phần mở đầu cần viết những gì",
+        "lý do chọn đề tài viết như thế nào", "hướng dẫn viết mục tiêu nghiên cứu", "cách xác định đối tượng và phạm vi nghiên cứu", "phần đặt vấn đề viết sao cho hay",
+        "văn mẫu mở bài nckh", "chém phần đặt vấn đề ntn", "lý do chọn đề tài viết sao cho mượt", "làm sao để phần mở đầu kêu"
+      ],
+      "responses": [
+        "Để viết phần mở đầu thuyết phục, bạn nên trình bày rõ: Lý do chọn đề tài, Mục tiêu nghiên cứu, Câu hỏi nghiên cứu, Đối tượng & Phạm vi, và Ý nghĩa của đề tài. Phần này cần viết ngắn gọn, súc tích."
+      ]
+    },
+    {
+      "tag": "nckh_thu_thap_trich_dan",
+      "patterns": [
+        "Sinh viên cần thu thập và xử lý tài liệu phục vụ nghiên cứu bằng những phương pháp nào?", "Làm sao để trích dẫn tài liệu đúng chuẩn?", "cách trích dẫn tài liệu tham khảo", "tìm tài liệu ở đâu",
+        "dùng chuẩn trích dẫn apa hay ieee", "cách lập danh mục tài liệu tham khảo", "phương pháp thu thập dữ liệu nghiên cứu khoa học", "cách dùng mendeley để trích dẫn",
+        "trích dẫn bừa có sao k", "copy mạng không trích nguồn", "bốc phét số liệu", "cách làm tài liệu tham khảo cho nhanh", "phần mềm quản lý trích dẫn"
+      ],
+      "responses": [
+        "Bạn có thể thu thập tài liệu từ sách, bài báo khoa học, văn bản pháp luật. Khi trích dẫn, cần ghi rõ nguồn và áp dụng chuẩn trích dẫn thống nhất (như chuẩn APA hoặc IEEE) để tránh lỗi đạo văn."
+      ]
+    },
+    {
+      "tag": "nckh_chuan_bi_bao_ve",
+      "patterns": [
+        "Quy trình chuẩn bị cho buổi bảo vệ đề tài gồm những bước nào?", "bảo vệ nckh cần chuẩn bị gì", "trước khi bảo vệ cần làm thủ tục gì", "chuẩn bị slide bảo vệ",
+        "hồ sơ nghiệm thu nckh gồm những gì", "cách làm slide báo cáo nckh", "trước khi ra hội đồng cần nộp những giấy tờ gì", "chuẩn bị kịch bản thuyết trình bảo vệ",
+        "chuẩn bị lên thớt nckh", "ra pháp trường cần mang gì", "in báo cáo nộp lúc nào", "thuyết trình cần slide bao nhiêu trang", "trang phục hôm bảo vệ"
+      ],
+      "responses": [
+        "Trước khi bảo vệ, sinh viên cần: Hoàn thiện báo cáo tổng kết; Nộp hồ sơ xét duyệt lên Khoa/Trường; Chuẩn bị bài thuyết trình Slide (tóm tắt mục tiêu, phương pháp, kết quả); và sẵn sàng tâm lý tham gia buổi bảo vệ trước Hội đồng."
+      ]
+    },
+    {
+      "tag": "nckh_tra_loi_phan_bien",
+      "patterns": [
+        "Làm sao để trả lời câu hỏi phản biện của giám khảo một cách thuyết phục?", "cách trả lời hội đồng nckh", "bị thầy cô hỏi khó thì làm sao", "kinh nghiệm bảo vệ đề tài",
+        "kỹ năng phản biện trước hội đồng", "cách xử lý khi không trả lời được câu hỏi của ban giám khảo", "thầy cô thường hỏi những câu gì khi bảo vệ", "làm sao để đạt điểm cao khi bảo vệ nckh",
+        "ra hoi dong bi thay co van dap kho qua thi lam sao thoat", "bị hội đồng quay", "thầy cô vặn vẹo", "cứng họng không biết trả lời", "đỡ đạn lúc bảo vệ", "combat với hội đồng", "bị chửi lúc phản biện", "cách cãi thầy cô nckh"
+      ],
+      "responses": [
+        "Bạn nên: Lắng nghe kỹ để hiểu đúng trọng tâm câu hỏi; Trả lời ngắn gọn dựa trên số liệu/kết quả nghiên cứu; Giữ thái độ bình tĩnh, tự tin; Nếu câu hỏi chỉ ra điểm yếu của đề tài, hãy thẳng thắn thừa nhận hạn chế và đề xuất đó làm hướng nghiên cứu tiếp theo."
+      ]
+    }
+  ]
+}

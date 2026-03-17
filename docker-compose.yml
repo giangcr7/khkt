@@ -25,7 +25,7 @@ services:
     networks:
       - nckh-network
 
-  # 3. PgAdmin (Giao diện xem Database - Giống Excel)
+  # 3. PgAdmin 
   pgadmin:
     image: dpage/pgadmin4
     container_name: nckh_pgadmin

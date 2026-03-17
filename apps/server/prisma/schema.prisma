@@ -39,12 +39,12 @@ model User {
   activityLogs        ActivityLog[]
 
   // --- HỆ THỐNG CHAT ---
-  sentMessages     Message[]            @relation("SentMessages")
-  roomsAsUser1     ChatRoom[]           @relation("User1Rooms")
-  roomsAsUser2     ChatRoom[]           @relation("User2Rooms")
+  sentMessages      Message[]            @relation("SentMessages")
+  roomsAsUser1      ChatRoom[]           @relation("User1Rooms")
+  roomsAsUser2      ChatRoom[]           @relation("User2Rooms")
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 }
 
 /////////////////////////////////////////////////
@@ -129,25 +129,25 @@ model Recruitment {
   author   User @relation("UserRecruitments", fields: [authorId], references: [id])
 
   applications Application[]
-  comments     RecruitmentComment[]
+  comments      RecruitmentComment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Application {
-  id            Int               @id @default(autoincrement())
-  content       String?           @db.Text 
+  id            Int                @id @default(autoincrement())
+  content       String?            @db.Text 
   status        ApplicationStatus @default(PENDING)
-  adminFeedback String?           @db.Text 
+  adminFeedback String?            @db.Text 
 
   recruitmentId Int
   recruitment   Recruitment       @relation(fields: [recruitmentId], references: [id])
   
   userId        Int
-  user          User              @relation("UserApplications", fields: [userId], references: [id])
+  user          User               @relation("UserApplications", fields: [userId], references: [id])
 
-  createdAt     DateTime          @default(now())
+  createdAt      DateTime          @default(now())
 
   @@unique([recruitmentId, userId]) 
 }
@@ -162,11 +162,11 @@ model RecruitmentComment {
   recruitmentId Int
   recruitment   Recruitment @relation(fields: [recruitmentId], references: [id])
 
-  createdAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
 }
 
 /////////////////////////////////////////////////
-// HỆ THỐNG CHAT REAL-TIME (MỚI)
+// HỆ THỐNG CHAT REAL-TIME
 /////////////////////////////////////////////////
 
 model ChatRoom {
@@ -183,7 +183,6 @@ model ChatRoom {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // Đảm bảo giữa 2 sinh viên chỉ có duy nhất 1 phòng chat
   @@unique([user1Id, user2Id]) 
 }
 
@@ -289,19 +288,6 @@ model Faq {
   updatedAt DateTime @updatedAt
 }
 
-model ResearchGuide {
-  id        Int     @id @default(autoincrement())
-  mainTitle String
-  subTitle  String? @db.Text
-
-  steps  Json
-  tools  Json
-  skills Json
-
-  isActive  Boolean  @default(true)
-  updatedAt DateTime @updatedAt
-}
-
 /////////////////////////////////////////////////
 // ENUMS
 /////////////////////////////////////////////////
@@ -327,13 +313,11 @@ enum MemberRole {
 
 enum ResourceType {
   TEMPLATE
-  GUIDE
   VIDEO
 }
 
 enum PostType {
   NEWS
-  GUIDE
   ANNOUNCEMENT
 }
 

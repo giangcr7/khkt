@@ -14,7 +14,6 @@ export class ProjectsService {
         private notificationsService: NotificationsService // Inject NotificationsService
     ) { }
 
-    // 1. SINH VIÊN: Đăng ký đề tài mới
     async create(userId: number, dto: CreateProjectDto) {
         const activeProject = await this.prisma.project.findFirst({
             where: {
@@ -45,8 +44,6 @@ export class ProjectsService {
             }
         });
     }
-
-    // 2. ADMIN: Lấy tất cả đề tài
     async findAllForAdmin() {
         return this.prisma.project.findMany({
             include: {
@@ -130,7 +127,37 @@ export class ProjectsService {
 
         return project;
     }
+    // Thêm vào trong class ProjectsService
+    async createTopic(data: { name: string; description?: string }) {
+        return this.prisma.topic.create({
+            data: {
+                name: data.name,
+            },
+        });
+    }
+    // Hàm cập nhật (Sửa)
+    async updateTopic(id: number, data: { name?: string; description?: string }) {
+        const topic = await this.prisma.topic.findUnique({ where: { id } });
+        if (!topic) {
+            throw new NotFoundException(`Không tìm thấy chủ đề với ID ${id}`);
+        }
 
+        return this.prisma.topic.update({
+            where: { id },
+            data: {
+                name: data.name,
+            },
+        });
+    }
+
+    // Hàm Xóa
+    async deleteTopic(id: number) {
+        // Lưu ý: Nếu có đề tài nào đang dùng Topic này, có thể DB sẽ báo lỗi khóa ngoại (Foreign Key).
+        // Tùy theo logic mà bạn xử lý (Xoá luôn các đề tài con, hoặc không cho xoá nếu đang có người dùng)
+        return this.prisma.topic.delete({
+            where: { id },
+        });
+    }
     // 7. SINH VIÊN: Chỉnh sửa thông tin
     async updateInfo(projectId: number, userId: number, dto: any) {
         const project = await this.prisma.project.findUnique({ where: { id: projectId } });
