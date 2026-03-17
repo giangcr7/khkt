@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, Tag, Button, Modal, Input, Timeline, Card, message,
-    Empty, Space, Divider, Select, InputNumber, Tooltip, Row, Col, Statistic, Typography
+    Empty, Space, Divider, Select, InputNumber, Tooltip, Row, Col, Statistic, Typography, Upload
 } from 'antd';
 import {
     EyeOutlined, MessageOutlined, CheckCircleOutlined,
     CheckOutlined, StarOutlined, FilePdfOutlined, DownloadOutlined,
     CloseCircleOutlined, InfoCircleOutlined,
-    CalendarOutlined
+    CalendarOutlined, UploadOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
+import { uploadService } from '../../services/upload.service';
 
-// KHAI BÁO CHUẨN: Lấy các thành phần từ Typography của Ant Design
 const { Title, Paragraph, Text } = Typography;
 
 const ManageProjects: React.FC = () => {
@@ -19,8 +19,12 @@ const ManageProjects: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<any>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [feedbackText, setFeedbackText] = useState('');
+    
+    // States cho phần nhận xét
     const [activeProgressId, setActiveProgressId] = useState<number | null>(null);
+    const [feedbackText, setFeedbackText] = useState('');
+    const [feedbackFile, setFeedbackFile] = useState<any[]>([]); // Thêm state lưu file đính kèm
+
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
     const [approveData, setApproveData] = useState({ status: 'APPROVED', feedback: '', score: 0 });
 
@@ -60,17 +64,59 @@ const ManageProjects: React.FC = () => {
         }
     };
 
+    // HÀM NHẬN XÉT ĐÃ ĐƯỢC NÂNG CẤP
     const submitFeedback = async () => {
-        if (!activeProgressId || !feedbackText) return;
+        if (!activeProgressId) return;
+        if (!feedbackText && feedbackFile.length === 0) {
+            message.warning('Vui lòng nhập nhận xét hoặc đính kèm file!');
+            return;
+        }
+
+        const hide = message.loading('Đang gửi nhận xét và tải file lên...', 0);
+
         try {
-            await api.patch(`/projects/progress/${activeProgressId}/feedback`, { feedback: feedbackText });
+            let finalFeedbackText = feedbackText;
+
+            // Nếu có file đính kèm, upload lên Cloudinary và chèn link vào nội dung text
+            if (feedbackFile.length > 0 && feedbackFile[0].originFileObj) {
+                const fileUrl = await uploadService.uploadFile(feedbackFile[0].originFileObj, 'feedbacks');
+                finalFeedbackText += `\n\n📁 [Tài liệu Giảng viên gửi kèm]: ${fileUrl}`;
+            }
+
+            await api.patch(`/projects/progress/${activeProgressId}/feedback`, { feedback: finalFeedbackText });
+            
             message.success('Đã gửi nhận xét đến sinh viên');
+            
+            // Reset form nhận xét
             setFeedbackText('');
+            setFeedbackFile([]);
             setActiveProgressId(null);
+            
+            // Load lại chi tiết đề tài
             handleViewDetail(selectedProject.id);
         } catch (error) {
             message.error('Lỗi khi gửi nhận xét');
+        } finally {
+            hide();
         }
+    };
+
+    const renderFeedbackContent = (text: string) => {
+        // Tách link file (nếu có) ra khỏi text để hiển thị thành nút Download cho đẹp
+        const parts = text.split('📁 [Tài liệu Giảng viên gửi kèm]: ');
+        if (parts.length > 1) {
+            return (
+                <div>
+                    <Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{parts[0]}</Paragraph>
+                    <div style={{ marginTop: 8 }}>
+                        <Button type="dashed" size="small" icon={<DownloadOutlined />} href={parts[1].trim()} target="_blank">
+                            Tải tài liệu sửa lỗi
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
+        return <Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{text}</Paragraph>;
     };
 
     const columns = [
@@ -136,6 +182,7 @@ const ManageProjects: React.FC = () => {
                 centered
                 footer={[
                     <Button key="close" onClick={() => setIsDetailOpen(false)}>Đóng</Button>,
+                    
                     selectedProject?.status === 'PENDING' && (
                         <Button key="approve" type="primary" icon={<CheckOutlined />} onClick={() => {
                             setApproveData({ status: 'APPROVED', feedback: '', score: 0 });
@@ -144,13 +191,22 @@ const ManageProjects: React.FC = () => {
                             Phê duyệt đề tài
                         </Button>
                     ),
-                    (selectedProject?.status === 'APPROVED' || selectedProject?.status === 'IN_PROGRESS') && (
+
+                    (selectedProject?.status === 'APPROVED' || selectedProject?.status === 'IN_PROGRESS') && 
+                    selectedProject?.progress === 100 && (
                         <Button key="complete" type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} icon={<StarOutlined />} onClick={() => {
                             setApproveData({ status: 'COMPLETED', feedback: '', score: 10 });
                             setIsApproveModalOpen(true);
                         }}>
-                            Chấm điểm & Kết thúc
+                            Nghiệm thu & Chấm điểm
                         </Button>
+                    ),
+                    
+                    (selectedProject?.status === 'APPROVED' || selectedProject?.status === 'IN_PROGRESS') && 
+                    selectedProject?.progress < 100 && (
+                        <Text type="secondary" style={{ marginLeft: 16, fontStyle: 'italic' }}>
+                            *Chỉ có thể nghiệm thu khi sinh viên báo cáo tiến độ đạt 100%.
+                        </Text>
                     )
                 ]}
             >
@@ -193,7 +249,7 @@ const ManageProjects: React.FC = () => {
                                                         <FilePdfOutlined style={{ fontSize: '18px', color: '#1d39c4' }} />
                                                         <Text>Minh chứng: <Text strong>{log.fileName || 'Tài liệu đính kèm'}</Text></Text>
                                                         <Tooltip title="Tải về xem">
-                                                            <Button size="small" type="primary" shape="circle" icon={<DownloadOutlined />} href={`http://localhost:3000${log.fileUrl}`} target="_blank" />
+                                                            <Button size="small" type="primary" shape="circle" icon={<DownloadOutlined />} href={log.fileUrl} target="_blank" />
                                                         </Tooltip>
                                                     </Space>
                                                 </div>
@@ -205,29 +261,46 @@ const ManageProjects: React.FC = () => {
                                                         <CheckCircleOutlined style={{ color: '#52c41a', marginTop: 4 }} />
                                                         <div>
                                                             <Text strong>Giảng viên nhận xét:</Text>
-                                                            <Paragraph style={{ margin: 0 }}>{log.feedback}</Paragraph>
+                                                            {renderFeedbackContent(log.feedback)}
                                                         </div>
                                                     </Space>
                                                 </div>
                                             ) : (
                                                 <div style={{ marginTop: 10 }}>
                                                     {activeProgressId === log.id ? (
-                                                        <div style={{ background: '#fffbe6', padding: '10px', borderRadius: '8px' }}>
+                                                        <div style={{ background: '#fffbe6', padding: '12px', borderRadius: '8px', border: '1px solid #ffe58f' }}>
                                                             <Input.TextArea
-                                                                rows={2}
-                                                                placeholder="Nhập hướng dẫn sửa bài..."
+                                                                rows={3}
+                                                                placeholder="Ghi chú các lỗi cần sửa..."
                                                                 value={feedbackText}
                                                                 onChange={e => setFeedbackText(e.target.value)}
                                                                 style={{ marginBottom: 10 }}
                                                             />
-                                                            <Space>
-                                                                <Button type="primary" size="small" onClick={submitFeedback}>Gửi nhận xét</Button>
-                                                                <Button size="small" onClick={() => setActiveProgressId(null)}>Hủy</Button>
-                                                            </Space>
+                                                            
+                                                            {/* NÚT UPLOAD FILE ĐÍNH KÈM Ở ĐÂY */}
+                                                            <Upload
+                                                                beforeUpload={() => false}
+                                                                fileList={feedbackFile}
+                                                                onChange={({ fileList }) => setFeedbackFile(fileList)}
+                                                                maxCount={1}
+                                                            >
+                                                                <Button icon={<UploadOutlined />} style={{ marginBottom: 10 }}>
+                                                                    Đính kèm file Word/PDF đã sửa
+                                                                </Button>
+                                                            </Upload>
+
+                                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                                <Button type="primary" onClick={submitFeedback}>Gửi nhận xét</Button>
+                                                                <Button onClick={() => {
+                                                                    setActiveProgressId(null);
+                                                                    setFeedbackText('');
+                                                                    setFeedbackFile([]);
+                                                                }}>Hủy</Button>
+                                                            </div>
                                                         </div>
                                                     ) : (
-                                                        <Button type="link" size="small" icon={<MessageOutlined />} onClick={() => setActiveProgressId(log.id)}>
-                                                            Viết nhận xét hướng dẫn
+                                                        <Button type="dashed" icon={<MessageOutlined />} onClick={() => setActiveProgressId(log.id)}>
+                                                            Viết nhận xét & Gửi file
                                                         </Button>
                                                     )}
                                                 </div>
@@ -256,10 +329,13 @@ const ManageProjects: React.FC = () => {
                             style={{ width: '100%', marginTop: 8 }}
                             value={approveData.status}
                             onChange={(val) => setApproveData({ ...approveData, status: val })}
+                            disabled={approveData.status === 'COMPLETED'} 
                         >
                             <Select.Option value="APPROVED">Chấp nhận đề tài</Select.Option>
                             <Select.Option value="REJECTED">Từ chối đề tài</Select.Option>
-                            <Select.Option value="COMPLETED">Nghiệm thu & Kết thúc</Select.Option>
+                            {approveData.status === 'COMPLETED' && (
+                                <Select.Option value="COMPLETED">Nghiệm thu & Kết thúc</Select.Option>
+                            )}
                         </Select>
                     </div>
 

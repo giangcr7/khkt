@@ -55,7 +55,6 @@ const Navbar: React.FC = () => {
     const getNavItems = () => {
         const items: any[] = [
             { key: '/', label: 'Trang chủ', icon: <HomeOutlined />, onClick: () => navigate('/') },
-            { key: '/guide', label: 'Hướng dẫn', icon: <InfoCircleOutlined />, onClick: () => navigate('/guide') },
             { key: '/timeline', label: 'Lộ trình', icon: <CalendarOutlined />, onClick: () => navigate('/timeline') },
             { key: '/resources', label: 'Tài liệu', icon: <ReadOutlined />, onClick: () => navigate('/resources') },
             { key: '/faq', label: 'Hỏi đáp', icon: <QuestionCircleOutlined />, onClick: () => navigate('/faq') },

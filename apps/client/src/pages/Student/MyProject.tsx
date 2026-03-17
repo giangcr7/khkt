@@ -9,6 +9,7 @@ import {
     UploadOutlined, FilePdfOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
+import { uploadService } from '../../services/upload.service'; // IMPORT THÊM DÒNG NÀY
 
 const MyProjectPage: React.FC = () => {
     const [project, setProject] = useState<any>(null);
@@ -91,27 +92,43 @@ const MyProjectPage: React.FC = () => {
         }
     };
 
+    // ĐÃ SỬA LẠI HÀM NÀY ĐỂ TRÁNH LỖI 500
     const handleSubmitProgress = async (values: any) => {
-        const formData = new FormData();
-        formData.append('title', values.title);
-        formData.append('content', values.content);
-        formData.append('percent', values.percent.toString());
-
-        if (fileList.length > 0) {
-            formData.append('file', fileList[0].originFileObj);
-        }
-
+        const hide = message.loading('Đang xử lý tải báo cáo lên...', 0);
+        
         try {
-            await api.post(`/projects/${project.id}/progress`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            message.success('Đã cập nhật tiến độ kèm file minh chứng');
+            let finalFileUrl = "";
+            let finalFileName = "";
+
+            // Nếu có file đính kèm, tải lên Cloudinary trước
+            if (fileList.length > 0 && fileList[0].originFileObj) {
+                const file = fileList[0].originFileObj;
+                finalFileUrl = await uploadService.uploadFile(file, 'progress_reports');
+                finalFileName = file.name;
+            }
+
+            // Đóng gói JSON
+            const payload = {
+                title: values.title,
+                content: values.content,
+                percent: Number(values.percent),
+                fileUrl: finalFileUrl,
+                fileName: finalFileName
+            };
+
+            // Gửi Data xuống Backend
+            await api.post(`/projects/${project.id}/progress`, payload);
+            
+            message.success('Đã cập nhật tiến độ thành công');
             setIsProgressModalOpen(false);
             setFileList([]);
             form.resetFields();
             fetchData();
         } catch (err) {
+            console.error("Submit Progress Error:", err);
             message.error('Lỗi khi gửi báo cáo');
+        } finally {
+            hide();
         }
     };
 
@@ -155,7 +172,6 @@ const MyProjectPage: React.FC = () => {
                             setIsRegisterModalOpen(true);
                         }}>Sửa</Button>
 
-                        {/* NÚT XÓA BỔ SUNG TẠI ĐÂY */}
                         <Button
                             danger
                             type="text"
@@ -170,7 +186,7 @@ const MyProjectPage: React.FC = () => {
                 <Descriptions bordered column={{ xxl: 3, xl: 3, lg: 2, md: 1, sm: 1, xs: 1 }}>
                     <Descriptions.Item label="Tên đề tài" span={3}><b>{project?.name}</b></Descriptions.Item>
                     <Descriptions.Item label="Lĩnh vực"><Tag color="blue">{project?.topic?.name}</Tag></Descriptions.Item>
-                    <Descriptions.Item label="GV Hướng dẫn"><Space><UserOutlined />{project?.mentor?.fullName || 'Chờ duyệt'}</Space></Descriptions.Item>
+                    <Descriptions.Item label="GV Hướng dẫn"><AntSpace><UserOutlined />{project?.mentor?.fullName || 'Chờ duyệt'}</AntSpace></Descriptions.Item>
                     <Descriptions.Item label="Trạng thái"><Tag color="orange">{project?.status}</Tag></Descriptions.Item>
                 </Descriptions>
             </Card>
@@ -191,7 +207,8 @@ const MyProjectPage: React.FC = () => {
 
                                 {log.fileUrl && (
                                     <div style={{ margin: '8px 0', padding: '4px 8px', background: '#f0f5ff', borderRadius: 4 }}>
-                                        <FilePdfOutlined /> <a href={`http://localhost:3000${log.fileUrl}`} target="_blank" rel="noreferrer">
+                                        {/* Đã sửa lại thẻ <a> để link chạy đúng */}
+                                        <FilePdfOutlined /> <a href={log.fileUrl} target="_blank" rel="noreferrer">
                                             Xem file minh chứng: {log.fileName || 'Tài liệu đính kèm'}
                                         </a>
                                     </div>

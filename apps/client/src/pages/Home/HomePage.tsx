@@ -1,46 +1,50 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Divider, Typography, Row, Col, Spin, message } from 'antd';
-import { RocketOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Layout, Spin, message } from 'antd';
 import api from '../../services/api';
 
-// Import các components đã tách
+// Đảm bảo bạn đã import HomeTimeline ở đây
 import HomeHero from '../../components/Home/HomeHero';
 import HomeStats from '../../components/Home/HomeStats';
-import HomeTimeline from '../../components/Home/HomeTimeline';
+import HomeTimeline from '../../components/Home/HomeTimeline'; // <-- IMPORT MỚI
 import HomeFAQ from '../../components/Home/HomeFAQ';
 import Footer from '../../components/Shared/Footer';
-import HomeGuide from '../../components/Home/HomeGuide';
 import HomeResources from '../../components/Home/HomeResources';
+import HomeNews from '../../components/Home/HomeNew';
 
 const { Content } = Layout;
-const { Title } = Typography;
 
 const HomePage: React.FC = () => {
     const [data, setData] = useState<any>({
         stats: null,
-        events: [],
+        events: [],    // Sẽ chứa dữ liệu Lộ trình (Timeline)
         faqs: [],
+        posts: [],
+        resources: [], 
         loading: true
     });
 
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
-                // Sử dụng Promise.all để gọi đồng thời các API, tối ưu tốc độ tải trang
-                const [resStats, resEvents, resFaqs] = await Promise.all([
+                const [resStats, resEvents, resFaqs, resPosts, resResources] = await Promise.all([
                     api.get('/projects/stats'),
-                    api.get('/events'),
-                    api.get('/faqs')
+                    api.get('/events'), // Lấy sự kiện cho Timeline
+                    api.get('/faqs'),
+                    api.get('/posts'),
+                    api.get('/resources') 
                 ]);
+
+                const sortedPosts = resPosts.data.reverse();
 
                 setData({
                     stats: resStats.data,
-                    events: resEvents.data,
+                    events: resEvents.data, // Lưu mảng sự kiện vào state
                     faqs: resFaqs.data,
+                    posts: sortedPosts.slice(0, 3), 
+                    resources: resResources.data.slice(0, 4), 
                     loading: false
                 });
             } catch (error) {
-                console.error("Lỗi tải trang chủ:", error);
                 message.error("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
                 setData((prev: any) => ({ ...prev, loading: false }));
             }
@@ -49,53 +53,30 @@ const HomePage: React.FC = () => {
         fetchHomeData();
     }, []);
 
-    // Hiển thị trạng thái đang tải toàn trang
-    if (data.loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-                <Spin size="large" tip="Đang khởi tạo hành trình khoa học..." />
-            </div>
-        );
-    }
+    if (data.loading) return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><Spin size="large" /></div>;
 
     return (
         <Layout style={{ background: '#fff' }}>
             <Content>
-                {/* 1. Phần tiêu đề & Tìm kiếm */}
+                {/* Khu vực 1: Banner & Tìm kiếm */}
                 <HomeHero />
 
-                {/* 2. Các con số thống kê */}
+                {/* Khu vực 2: Thống kê số liệu nổi bật */}
                 <HomeStats stats={data.stats} />
 
-                {/* 3. Nội dung chính: Cẩm nang & Lộ trình */}
-                <div style={{ maxWidth: '1200px', margin: '80px auto', padding: '0 20px' }}>
-                    <Row gutter={[60, 40]}>
-                        {/* Cẩm nang nghiên cứu (Trái) */}
-                        <Col xs={24} lg={14}>
-                            <Divider orientation={"left" as any} >
-                                <Title level={3}><RocketOutlined /> CẨM NANG NGHIÊN CỨU</Title>
-                            </Divider>
-                            <HomeGuide />
-                        </Col>
+                {/* Khu vực 3: LỘ TRÌNH SỰ KIỆN (TIMELINE) */}
+                {/* Đặt ở đây để sinh viên thấy ngay các mốc thời gian quan trọng */}
+                <HomeTimeline events={data.events} /> 
 
-                        {/* Lộ trình sự kiện (Phải) */}
-                        <Col xs={24} lg={10}>
-                            <Divider orientation={"left" as any}>
-                                <Title level={3}><QuestionCircleOutlined /> LỘ TRÌNH DỰ KIẾN</Title>
-                            </Divider>
-                            <HomeTimeline events={data.events} />
-                        </Col>
-                    </Row>
-                </div>
+                {/* Khu vực 4: Tin tức & Thông báo mới nhất */}
+                <HomeNews posts={data.posts} />
 
-                {/* 4. Khu vực Kho tài liệu */}
-                <HomeResources />
+                {/* Khu vực 5: Kho tài liệu biểu mẫu */}
+                <HomeResources resources={data.resources} /> 
 
-                {/* 5. Câu hỏi thường gặp */}
+                {/* Khu vực 6: Hỏi đáp thường gặp */}
                 <HomeFAQ faqs={data.faqs} />
             </Content>
-
-            {/* 6. Chân trang dùng chung */}
             <Footer />
         </Layout>
     );

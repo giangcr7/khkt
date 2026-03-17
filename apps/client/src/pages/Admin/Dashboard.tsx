@@ -37,7 +37,6 @@ const AdminDashboard: React.FC = () => {
         fetchStats();
     }, []);
 
-    // Tối ưu hóa việc tính toán biểu đồ
     const pieConfig = useMemo(() => {
         if (!stats?.projects) return null;
 
@@ -58,7 +57,6 @@ const AdminDashboard: React.FC = () => {
             label: {
                 type: 'inner',
                 offset: '-50%',
-                // Fix lỗi Undefined variable: value
                 content: (d: any) => `${d.value}`,
                 style: { textAlign: 'center', fontSize: 14, fontWeight: 'bold' },
             },
@@ -79,7 +77,7 @@ const AdminDashboard: React.FC = () => {
                     <Text type="secondary">Cập nhật số liệu thống kê thực tế đến năm 2026</Text>
                 </Col>
                 <Col>
-                    <Button type="primary" icon={<FileExcelOutlined />} onClick={() => message.info('Tính năng đang được phát triển')}>
+                    <Button type="primary" icon={<FileExcelOutlined />} onClick={() => message.info('Tính năng xuất báo cáo đang được phát triển')}>
                         Xuất báo cáo tổng hợp
                     </Button>
                 </Col>
@@ -89,23 +87,23 @@ const AdminDashboard: React.FC = () => {
             {/* HÀNG 1: THỐNG KÊ TỔNG QUAN */}
             <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #1890ff' }}>
+                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #1890ff', borderRadius: 8 }}>
                         <Statistic title="Tổng Sinh viên" value={stats.users?.student || 0} prefix={<UserOutlined />} />
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #722ed1' }}>
+                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #722ed1', borderRadius: 8 }}>
                         <Statistic title="Tổng Giảng viên" value={stats.users?.lecturer || 0} prefix={<SolutionOutlined />} />
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #faad14' }}>
+                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #faad14', borderRadius: 8 }}>
                         <Statistic title="Tổng Đề tài" value={stats.projects?.total || 0} prefix={<FileTextOutlined />} />
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #13c2c2' }}>
-                        <Statistic title="Tài liệu & Video" value={stats.resources || 0} prefix={<BookOutlined />} />
+                    <Card bordered={false} hoverable style={{ borderLeft: '4px solid #13c2c2', borderRadius: 8 }}>
+                        <Statistic title="Kho tài liệu số" value={stats.resources || 0} prefix={<BookOutlined />} />
                     </Card>
                 </Col>
             </Row>
@@ -113,45 +111,46 @@ const AdminDashboard: React.FC = () => {
             <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
                 {/* BIỂU ĐỒ TRẠNG THÁI */}
                 <Col xs={24} lg={10}>
-                    <Card title="Phân tích Trạng thái Đề tài" bordered={false} bodyStyle={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Card title="Phân tích Trạng thái Đề tài" bordered={false} bodyStyle={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center' }} style={{ borderRadius: 12 }}>
                         {pieConfig ? <Pie {...(pieConfig as any)} /> : <Text type="secondary">Chưa có dữ liệu biểu đồ</Text>}
                     </Card>
                 </Col>
 
-                {/* TÁC VỤ ƯU TIÊN */}
+                {/* TÁC VỤ ƯU TIÊN - ĐÃ GỠ GUIDE */}
                 <Col xs={24} lg={6}>
-                    <Card title="Tác vụ ưu tiên" bordered={false} bodyStyle={{ height: 380 }}>
+                    <Card title="Tác vụ ưu tiên" bordered={false} bodyStyle={{ height: 380 }} style={{ borderRadius: 12 }}>
                         <Space direction="vertical" style={{ width: '100%' }}>
                             <div style={{ marginBottom: 16 }}>
-                                <Text type="secondary">Cần xử lý ngay:</Text>
+                                <Text type="secondary">Cần phê duyệt:</Text>
                                 <div style={{ marginTop: 8 }}>
                                     <Badge count={stats.projects?.pending || 0} overflowCount={99}>
-                                        <Button block onClick={() => navigate('/admin/manage-projects')}>Duyệt đề tài mới</Button>
+                                        <Button block size="large" onClick={() => navigate('/admin/manage-projects')}>Duyệt đề tài mới</Button>
                                     </Badge>
                                 </div>
                             </div>
                             <Divider style={{ margin: '12px 0' }} />
-                            <Button block icon={<RocketOutlined />} onClick={() => navigate('/admin/manage-news')}>Đăng thông báo mới</Button>
-                            <Button block icon={<CalendarOutlined />} onClick={() => navigate('/admin/manage-events')}>Cập nhật lộ trình</Button>
-                            <Button block icon={<ExclamationCircleOutlined />} danger>Nhắc nhở trễ hạn</Button>
+                            <Button block size="large" icon={<RocketOutlined />} onClick={() => navigate('/admin/manage-news')}>Đăng tin tức mới</Button>
+                            <Button block size="large" icon={<CalendarOutlined />} onClick={() => navigate('/admin/manage-events')}>Cập nhật lịch sự kiện</Button>
+                            <Button block size="large" icon={<ExclamationCircleOutlined />} danger>Cảnh báo trễ tiến độ</Button>
                         </Space>
                     </Card>
                 </Col>
 
                 {/* KPI HOÀN THÀNH */}
                 <Col xs={24} lg={8}>
-                    <Card title="Chỉ số hiệu quả (KPI)" bordered={false} bodyStyle={{ height: 380, textAlign: 'center' }}>
+                    <Card title="Chỉ số hiệu quả (KPI)" bordered={false} bodyStyle={{ height: 380, textAlign: 'center' }} style={{ borderRadius: 12 }}>
                         <Progress
                             type="dashboard"
                             percent={stats.projects?.total > 0 ? Math.round((stats.projects.completed / stats.projects.total) * 100) : 0}
                             strokeColor="#52c41a"
                             gapDegree={30}
                             width={180}
+                            strokeWidth={10}
                         />
                         <div style={{ marginTop: 20 }}>
-                            <Text strong style={{ fontSize: 18 }}>Tỉ lệ đề tài về đích</Text>
+                            <Text strong style={{ fontSize: 18 }}>Tỉ lệ đề tài hoàn thành</Text>
                             <br />
-                            <Text type="secondary">Mục tiêu năm 2026: 85%</Text>
+                            <Text type="secondary">Kỳ hạn nghiên cứu năm 2026</Text>
                         </div>
                     </Card>
                 </Col>
@@ -159,18 +158,18 @@ const AdminDashboard: React.FC = () => {
 
             <Row gutter={[16, 16]} style={{ marginTop: 24, marginBottom: 40 }}>
                 <Col xs={24} lg={14}>
-                    <Card title="Phân bố theo Lĩnh vực (Topics)" bordered={false}>
+                    <Card title="Phân bố Đề tài theo Lĩnh vực" bordered={false} style={{ borderRadius: 12 }}>
                         <List
                             grid={{ gutter: 16, xs: 1, sm: 2, md: 3 }}
                             dataSource={stats.topics || []}
                             renderItem={(item: any) => (
                                 <List.Item>
-                                    <Card size="small" style={{ background: '#fafafa' }}>
+                                    <Card size="small" style={{ background: '#f9fafb', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                                         <Statistic
-                                            title={item.name}
+                                            title={<span style={{ fontSize: 13 }}>{item.name}</span>}
                                             value={item._count?.projects || 0}
-                                            suffix="đề tài"
-                                            valueStyle={{ fontSize: 16 }}
+                                            suffix={<span style={{ fontSize: 12 }}>đề tài</span>}
+                                            valueStyle={{ fontSize: 18, color: '#1890ff' }}
                                         />
                                     </Card>
                                 </List.Item>
@@ -180,19 +179,19 @@ const AdminDashboard: React.FC = () => {
                 </Col>
 
                 <Col xs={24} lg={10}>
-                    <Card title="Nhật ký hoạt động" bordered={false} extra={<Button type="link">Chi tiết</Button>}>
+                    <Card title="Nhật ký hoạt động hệ thống" bordered={false} extra={<Button type="link">Xem tất cả</Button>} style={{ borderRadius: 12 }}>
                         <List
                             size="small"
                             dataSource={stats.recentActivities || [
-                                { id: 1, text: 'Admin đã cập nhật tài liệu hướng dẫn mới', time: '10 phút trước' },
-                                { id: 2, text: 'Hệ thống tự động nhắc hạn nộp thuyết minh', time: '1 giờ trước' },
-                                { id: 3, text: 'Giảng viên Nguyễn Văn A đã duyệt 1 đề tài', time: '3 giờ trước' }
+                                { id: 1, text: 'Admin đã duyệt danh sách đề tài mới kỳ 1', time: '15 phút trước' },
+                                { id: 2, text: 'Hệ thống gửi thông báo nhắc lịch nộp báo cáo tháng', time: '2 giờ trước' },
+                                { id: 3, text: 'Đã cập nhật tài liệu mẫu thuyết minh NCKH', time: '5 giờ trước' }
                             ]}
                             renderItem={(item: any) => (
                                 <List.Item>
-                                    <Space>
-                                        <Text type="secondary" style={{ fontSize: 12 }}>[{item.time}]</Text>
-                                        <Text>{item.text}</Text>
+                                    <Space direction="vertical" size={0}>
+                                        <Text style={{ fontSize: 14 }}>{item.text}</Text>
+                                        <Text type="secondary" style={{ fontSize: 11 }}>{item.time}</Text>
                                     </Space>
                                 </List.Item>
                             )}

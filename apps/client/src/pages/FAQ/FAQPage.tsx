@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Collapse, Typography, Input, Button, Card, Divider, Space, Empty, Spin } from 'antd';
-import { QuestionCircleOutlined, MessageOutlined, SearchOutlined } from '@ant-design/icons';
+import { Collapse, Typography, Empty, Spin, Tag, Layout } from 'antd';
+import { RobotOutlined, BulbOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 const { Panel } = Collapse;
+const { Content } = Layout;
 
 const FAQPage: React.FC = () => {
     const [faqs, setFaqs] = useState([]);
-    const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -26,87 +26,93 @@ const FAQPage: React.FC = () => {
         fetchFaqs();
     }, []);
 
-    const filteredFaqs = faqs.filter((f: any) =>
-        f.question.toLowerCase().includes(search.toLowerCase()) ||
-        f.answer.toLowerCase().includes(search.toLowerCase())
-    );
-
     return (
-        <div style={{ padding: '40px', maxWidth: '900px', margin: '0 auto', marginTop: '64px' }}>
-            {/* Tiêu đề và Thanh tìm kiếm */}
-            <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-                <Title level={2}>
-                    <QuestionCircleOutlined style={{ marginRight: '10px', color: '#1890ff' }} />
-                    Giải đáp thắc mắc (FAQ)
+        <Layout style={{ background: '#f5f7fa', minHeight: '100vh', paddingBottom: '80px' }}>
+            
+            {/* KHU VỰC BANNER CHUYÊN NGHIỆP */}
+            <div style={{
+                background: '#1a3353', // Màu xanh đen sang trọng chuẩn giáo dục
+                padding: '80px 20px 100px 20px',
+                textAlign: 'center',
+                color: '#fff'
+            }}>
+                <Title level={1} style={{ color: '#fff', margin: 0, fontWeight: 700 }}>
+                    Câu hỏi thường gặp (FAQ)
                 </Title>
-                <Paragraph style={{ fontSize: '16px', color: '#595959' }}>
-                    Tìm kiếm nhanh câu trả lời cho các vấn đề thường gặp trong quá trình Nghiên cứu khoa học.
+                <Paragraph style={{ color: '#91caff', fontSize: '18px', marginTop: '16px', maxWidth: '650px', margin: '16px auto 0' }}>
+                    Tổng hợp các giải đáp về quy chế, thể lệ và hướng dẫn thực hiện Nghiên cứu khoa học dành cho sinh viên.
                 </Paragraph>
-                <Input
-                    placeholder="Tìm kiếm câu hỏi (ví dụ: quy định nhóm, cách nộp bài, SPSS...)"
-                    size="large"
-                    prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-                    onChange={e => setSearch(e.target.value)}
-                    style={{ maxWidth: '600px', marginTop: '20px', borderRadius: '8px' }}
-                />
             </div>
 
-            {/* Danh sách câu hỏi */}
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>
-            ) : filteredFaqs.length > 0 ? (
-                <Collapse
-                    accordion
-                    style={{ background: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
-                >
-                    {filteredFaqs.map((f: any) => (
-                        <Panel
-                            header={<Text strong style={{ fontSize: '15px' }}>{f.question}</Text>}
-                            key={f.id}
-                            style={{ borderBottom: '1px solid #f0f0f0' }}
+            {/* KHU VỰC NỘI DUNG (Nổi lên trên banner một chút để tạo độ sâu) */}
+            <Content style={{ maxWidth: '900px', margin: '-40px auto 0', width: '100%', padding: '0 20px' }}>
+                
+                {/* GỢI Ý CHATBOT NỔI BẬT */}
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                    <Tag 
+                        icon={<RobotOutlined style={{ fontSize: 18 }} />} 
+                        color="blue" 
+                        style={{ 
+                            padding: '12px 24px', 
+                            borderRadius: '30px', 
+                            fontSize: '15px', 
+                            cursor: 'pointer', 
+                            boxShadow: '0 4px 15px rgba(24,144,255,0.3)', 
+                            border: 'none',
+                            fontWeight: 500
+                        }}
+                        onClick={() => {
+                            // Tự động mở Chatbot khi click
+                            const chatBtn = document.querySelector('.ant-btn-circle.ant-btn-lg') as HTMLElement;
+                            if(chatBtn) chatBtn.click();
+                        }}
+                    >
+                        Chưa tìm thấy đáp án? Hỏi ngay Trợ lý AI của chúng tôi!
+                    </Tag>
+                </div>
+
+                {/* KHUNG DANH SÁCH CÂU HỎI */}
+                <div style={{ 
+                    background: '#fff', 
+                    padding: '40px', 
+                    borderRadius: '16px', 
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.05)' 
+                }}>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '60px' }}><Spin size="large" /></div>
+                    ) : faqs.length > 0 ? (
+                        <Collapse
+                            accordion
+                            bordered={false}
+                            expandIcon={({ isActive }) => <BulbOutlined style={{ fontSize: 20, color: isActive ? '#1890ff' : '#bfbfbf' }} />}
+                            style={{ background: '#fff' }}
                         >
-                            <Paragraph style={{ color: '#555', margin: 0, lineHeight: '1.6' }}>
-                                {f.answer}
-                            </Paragraph>
-                        </Panel>
-                    ))}
-                </Collapse>
-            ) : (
-                <Empty description="Không tìm thấy câu hỏi phù hợp" />
-            )}
-
-            <Divider style={{ marginTop: '60px' }} />
-
-            {/* Phần liên hệ tư vấn */}
-            <Card
-                style={{
-                    background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)',
-                    textAlign: 'center',
-                    borderRadius: '15px',
-                    border: 'none'
-                }}
-            >
-                <Space direction="vertical" size="middle">
-                    <Avatar
-                        size={64}
-                        icon={<MessageOutlined />}
-                        style={{ backgroundColor: '#1890ff' }}
-                    />
-                    <Title level={4} style={{ margin: 0 }}>Bạn vẫn còn câu hỏi chuyên môn khác?</Title>
-                    <Paragraph style={{ maxWidth: '600px', margin: '0 auto' }}>
-                        Nếu không tìm thấy câu trả lời trong kho FAQ, bạn có thể gửi câu hỏi trực tiếp cho hội đồng tư vấn.
-                        Đội ngũ giảng viên sẽ phản hồi qua email của bạn trong vòng 48 giờ.
-                    </Paragraph>
-                    <Button type="primary" size="large" shape="round" style={{ height: '45px', padding: '0 40px' }}>
-                        Gửi câu hỏi tư vấn ngay
-                    </Button>
-                </Space>
-            </Card>
-        </div>
+                            {faqs.map((f: any) => (
+                                <Panel
+                                    header={<Text strong style={{ fontSize: '16px', color: '#262626' }}>{f.question}</Text>}
+                                    key={f.id}
+                                    style={{ borderBottom: '1px solid #f0f0f0', padding: '12px 0' }}
+                                >
+                                    <Paragraph style={{ 
+                                        color: '#595959', 
+                                        margin: 0, 
+                                        lineHeight: '1.8', 
+                                        fontSize: '15px', 
+                                        whiteSpace: 'pre-wrap', 
+                                        paddingLeft: '32px' 
+                                    }}>
+                                        {f.answer}
+                                    </Paragraph>
+                                </Panel>
+                            ))}
+                        </Collapse>
+                    ) : (
+                        <Empty description="Hiện chưa có câu hỏi nào được cập nhật." style={{ margin: '60px 0' }} />
+                    )}
+                </div>
+            </Content>
+        </Layout>
     );
 };
-
-// Import bổ sung Avatar nếu cần
-import { Avatar } from 'antd';
 
 export default FAQPage;

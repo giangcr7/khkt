@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, Upload, message, Select, Tag, Popconfirm, Card, Space, Tooltip, Typography } from 'antd';
 import {
     UploadOutlined, DeleteOutlined, EditOutlined, LinkOutlined,
-    FileTextOutlined, VideoCameraOutlined, InfoCircleOutlined,
-    EyeOutlined
+    VideoCameraOutlined, EyeOutlined, FilePdfOutlined, FileWordOutlined, DownloadOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
+
+const { Title, Text } = Typography;
 
 const ManageResources: React.FC = () => {
     const [resources, setResources] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-
     const [editingId, setEditingId] = useState<number | null>(null);
     const [fileList, setFileList] = useState<any[]>([]);
     const [currentRecord, setCurrentRecord] = useState<any>(null);
@@ -19,6 +19,7 @@ const ManageResources: React.FC = () => {
     const [form] = Form.useForm();
     const typeValue = Form.useWatch('type', form);
 
+    // --- LOGIC XỬ LÝ DỮ LIỆU ---
     const fetchResources = async () => {
         setLoading(true);
         try {
@@ -33,6 +34,14 @@ const ManageResources: React.FC = () => {
 
     useEffect(() => { fetchResources(); }, []);
 
+    const getFileIcon = (type: string, url: string) => {
+        if (type === 'VIDEO') return <VideoCameraOutlined style={{ fontSize: 24, color: '#ff4d4f' }} />;
+        const isPDF = url?.toLowerCase().endsWith('.pdf');
+        if (isPDF) return <FilePdfOutlined style={{ fontSize: 24, color: '#f5222d' }} />;
+        return <FileWordOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
+    };
+
+    // --- HANDLERS ---
     const openModal = (record?: any) => {
         if (record) {
             setEditingId(record.id);
@@ -40,219 +49,182 @@ const ManageResources: React.FC = () => {
             form.setFieldsValue({
                 title: record.title,
                 type: record.type,
-                description: record.description, // Bổ sung trường mô tả
+                description: record.description,
                 link: record.type === 'VIDEO' ? record.fileUrl : '',
             });
-            setFileList([]);
         } else {
             setEditingId(null);
             setCurrentRecord(null);
             form.resetFields();
-            setFileList([]);
         }
+        setFileList([]);
         setIsModalOpen(true);
     };
 
     const handleSubmit = async (values: any) => {
+        setLoading(true);
         try {
             const formData = new FormData();
             formData.append('title', values.title);
-            formData.append('type', values.type);
+            formData.append('type', values.type); // Lúc này type chỉ gửi TEMPLATE hoặc VIDEO
             formData.append('description', values.description || '');
 
             if (values.type === 'VIDEO') {
-                if (!values.link) return message.error('Vui lòng nhập Link Video (Youtube/Drive)!');
                 formData.append('link', values.link);
-            } else {
-                if (fileList.length > 0) {
-                    formData.append('file', fileList[0].originFileObj);
-                } else {
-                    if (editingId && currentRecord?.type === 'VIDEO') {
-                        return message.error('Vui lòng Upload file mới khi chuyển từ Video sang Tài liệu!');
-                    }
-                    if (!editingId) return message.error('Vui lòng chọn File tài liệu!');
-                }
+            } else if (fileList.length > 0) {
+                formData.append('file', fileList[0].originFileObj);
             }
 
-            setLoading(true);
             if (editingId) {
                 await api.patch(`/resources/${editingId}`, formData);
-                message.success('Cập nhật tài liệu thành công!');
+                message.success('Cập nhật thành công!');
             } else {
                 await api.post('/resources/upload', formData);
-                message.success('Thêm tài liệu vào kho thành công!');
+                message.success('Đăng tải tài liệu thành công!');
             }
-
             setIsModalOpen(false);
             fetchResources();
-        } catch (err) {
-            message.error('Có lỗi xảy ra trong quá trình lưu dữ liệu!');
+        } catch (err: any) {
+            console.error(err);
+            message.error('Thao tác thất bại, vui lòng kiểm tra lại!');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id: number) => {
-        try {
-            await api.delete(`/resources/${id}`);
-            message.success('Đã xóa tài liệu khỏi hệ thống');
-            fetchResources();
-        } catch (error) { message.error('Lỗi khi thực hiện lệnh xóa'); }
-    };
-
     const columns = [
         {
-            title: 'ID',
-            dataIndex: 'id',
-            width: 60,
-            align: 'center' as const
-        },
-        {
-            title: 'Tên tài liệu',
-            dataIndex: 'title',
-            key: 'title',
-            render: (text: string, record: any) => (
-                <Space direction="vertical" size={0}>
-                    <Text strong>{text}</Text>
-                    {record.description && (
-                        <Text type="secondary" style={{ fontSize: '12px' }}>{record.description}</Text>
-                    )}
+            title: 'Tài liệu',
+            key: 'resource',
+            render: (_: any, record: any) => (
+                <Space size="middle">
+                    <div style={{ 
+                        width: 45, height: 45, borderRadius: 8, background: '#f5f5f5',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center' 
+                    }}>
+                        {getFileIcon(record.type, record.fileUrl)}
+                    </div>
+                    <Space direction="vertical" size={0}>
+                        <Text strong>{record.title}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{record.description}</Text>
+                    </Space>
                 </Space>
             )
         },
         {
-            title: 'Loại',
+            title: 'Phân loại',
             dataIndex: 'type',
-            width: 150,
+            width: 120,
             render: (type: string) => {
-                const config: any = {
-                    TEMPLATE: { color: 'blue', icon: <FileTextOutlined />, text: 'Biểu mẫu' },
-                    GUIDE: { color: 'green', icon: <InfoCircleOutlined />, text: 'Hướng dẫn' },
-                    VIDEO: { color: 'red', icon: <VideoCameraOutlined />, text: 'Video' }
-                };
-                const item = config[type] || config.TEMPLATE;
-                return <Tag color={item.color} icon={item.icon}>{item.text}</Tag>;
+                const colors: Record<string, string> = { TEMPLATE: 'blue', VIDEO: 'volcano' };
+                const labels: Record<string, string> = { TEMPLATE: 'Biểu mẫu', VIDEO: 'Video' };
+                return <Tag color={colors[type] || 'default'}>{labels[type] || type}</Tag>;
             }
         },
         {
-            title: 'Link/File',
+            title: 'Xem / Tải',
             dataIndex: 'fileUrl',
             width: 100,
             align: 'center' as const,
-            render: (url: string) => {
-                const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url}`;
-                return (
-                    <Tooltip title="Xem nội dung">
-                        <Button type="link" icon={<EyeOutlined />} href={fullUrl} target="_blank" />
+            render: (url: string) => (
+                <Space>
+                    <Tooltip title="Xem trực tiếp">
+                        <Button type="text" icon={<EyeOutlined />} href={url} target="_blank" />
                     </Tooltip>
-                );
-            }
+                    <Tooltip title="Tải về máy">
+                        <Button type="text" icon={<DownloadOutlined />} href={url} download />
+                    </Tooltip>
+                </Space>
+            )
         },
         {
             title: 'Hành động',
             key: 'action',
-            width: 180,
-            align: 'center' as const,
+            width: 150,
+            align: 'right' as const,
             render: (_: any, record: any) => (
                 <Space>
-                    <Button
-                        type="primary" ghost size="small" icon={<EditOutlined />}
-                        onClick={() => openModal(record)}
-                    >
-                        Sửa
-                    </Button>
-                    <Popconfirm
-                        title="Xác nhận xóa tài liệu?"
-                        description="Hành động này không thể hoàn tác."
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                    >
-                        <Button danger size="small" icon={<DeleteOutlined />}>Xóa</Button>
+                    <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>Sửa</Button>
+                    <Popconfirm title="Xác nhận xóa?" onConfirm={() => handleDelete(record.id)}>
+                        <Button type="link" danger size="small" icon={<DeleteOutlined />}>Xóa</Button>
                     </Popconfirm>
                 </Space>
             )
         }
     ];
 
+    const handleDelete = async (id: number) => {
+        try {
+            await api.delete(`/resources/${id}`);
+            message.success('Đã xóa tài liệu');
+            fetchResources();
+        } catch (error) { message.error('Lỗi khi xóa'); }
+    };
+
     return (
-        <div style={{ padding: '24px' }}>
-            <Card bordered={false} className="table-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+        <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
+            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
                     <div>
-                        <Title level={3} style={{ margin: 0 }}>Quản lý Kho Tài liệu & Video</Title>
-                        <Text type="secondary">Quản lý các biểu mẫu, hướng dẫn và video đào tạo NCKH</Text>
+                        <Title level={2} style={{ margin: 0 }}>Kho học liệu số</Title>
+                        <Text type="secondary">Quản lý và lưu trữ tài liệu nghiên cứu khoa học</Text>
                     </div>
-                    <Button type="primary" size="large" icon={<UploadOutlined />} onClick={() => openModal()}>
-                        Thêm mới tài liệu
+                    <Button type="primary" size="large" icon={<UploadOutlined />} onClick={() => openModal()} style={{ borderRadius: 8 }}>
+                        Đăng tải mới
                     </Button>
                 </div>
 
-                <Table
-                    dataSource={resources}
-                    columns={columns}
-                    rowKey="id"
+                <Table 
+                    dataSource={resources} 
+                    columns={columns} 
+                    rowKey="id" 
                     loading={loading}
-                    pagination={{ pageSize: 8 }}
+                    pagination={{ pageSize: 7 }}
                 />
             </Card>
 
             <Modal
-                title={editingId ? "Cập nhật tài liệu" : "Đăng tải tài liệu mới"}
+                title={<Title level={4} style={{ margin: 0 }}>{editingId ? "✍️ Chỉnh sửa tài liệu" : "🚀 Tải lên tài liệu mới"}</Title>}
                 open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
                 onOk={() => form.submit()}
                 confirmLoading={loading}
-                okText={editingId ? "Lưu thay đổi" : "Đăng tải ngay"}
-                cancelText="Đóng"
-                width={600}
+                width={550}
+                okText="Xác nhận"
+                cancelText="Hủy bỏ"
             >
-                <Form form={form} onFinish={handleSubmit} layout="vertical" initialValues={{ type: 'TEMPLATE' }}>
-                    <Form.Item name="title" label="Tiêu đề hiển thị" rules={[{ required: true, message: 'Vui lòng nhập tiêu đề tài liệu' }]}>
-                        <Input placeholder="Ví dụ: Mẫu thuyết minh đề tài NCKH 2025" />
+                <Form form={form} onFinish={handleSubmit} layout="vertical" style={{ marginTop: 24 }}>
+                    <Form.Item name="title" label="Tên tài liệu" rules={[{ required: true, message: 'Nhập tiêu đề!' }]}>
+                        <Input placeholder="Mẫu báo cáo, Form đăng ký..." />
                     </Form.Item>
 
-                    <Form.Item name="description" label="Mô tả ngắn gọn">
-                        <Input.TextArea placeholder="Thông tin tóm tắt về tài liệu này..." rows={2} />
+                    <Form.Item name="description" label="Mô tả">
+                        <Input.TextArea placeholder="Mô tả ngắn gọn nội dung..." rows={3} />
                     </Form.Item>
 
-                    <Form.Item name="type" label="Phân loại" rules={[{ required: true }]}>
-                        <Select onChange={() => {
-                            setFileList([]);
-                            form.setFieldValue('link', '');
-                        }}>
-                            <Select.Option value="TEMPLATE">📄 Biểu mẫu chuẩn (Template)</Select.Option>
-                            <Select.Option value="GUIDE">📘 Tài liệu hướng dẫn (Guide)</Select.Option>
-                            <Select.Option value="VIDEO">🎬 Video bài giảng/hướng dẫn (Video)</Select.Option>
+                    <Form.Item name="type" label="Loại tài nguyên" rules={[{ required: true, message: 'Chọn loại tài liệu!' }]}>
+                        <Select placeholder="-- Chọn phân loại --">
+                            {/* Đã gỡ bỏ lựa chọn Hướng dẫn (GUIDE) */}
+                            <Select.Option value="TEMPLATE">DOC/PDF</Select.Option>
+                            <Select.Option value="VIDEO">Video bài giảng</Select.Option>
                         </Select>
                     </Form.Item>
 
                     {typeValue === 'VIDEO' ? (
-                        <Form.Item
-                            name="link"
-                            label="Đường dẫn Video"
-                            rules={[{ required: true, message: 'Vui lòng nhập URL!' }]}
-                            extra="Hỗ trợ link Youtube, Google Drive hoặc Vimeo."
-                        >
-                            <Input prefix={<LinkOutlined />} placeholder="https://www.youtube.com/watch?v=..." />
+                        <Form.Item name="link" label="Đường dẫn Video (URL)" rules={[{ required: true, message: 'Nhập URL video!' }]}>
+                            <Input prefix={<LinkOutlined />} placeholder="Youtube, Drive..." />
                         </Form.Item>
                     ) : (
-                        <Form.Item
-                            label={editingId && currentRecord?.type !== 'VIDEO' ? "Tải File mới (Để trống nếu giữ file cũ)" : "Tải lên File tài liệu"}
-                            required={!editingId || currentRecord?.type === 'VIDEO'}
-                        >
+                        <Form.Item label="Tệp tài liệu (PDF/Docx)">
                             <Upload.Dragger
                                 maxCount={1}
                                 beforeUpload={() => false}
                                 fileList={fileList}
                                 onChange={({ fileList }) => setFileList(fileList)}
-                                style={{ background: '#fafafa', borderRadius: '8px' }}
+                                style={{ background: '#fafafa', borderRadius: 8 }}
                             >
-                                <p className="ant-upload-drag-icon">
-                                    <UploadOutlined />
-                                </p>
-                                <p className="ant-upload-text">Nhấp hoặc kéo thả file vào đây để tải lên</p>
-                                <p className="ant-upload-hint">Hỗ trợ định dạng .doc, .docx, .pdf, .xls (Tối đa 20MB)</p>
+                                <p className="ant-upload-drag-icon"><UploadOutlined /></p>
+                                <p className="ant-upload-text">Kéo thả hoặc click để chọn file</p>
                             </Upload.Dragger>
                         </Form.Item>
                     )}
@@ -262,5 +234,4 @@ const ManageResources: React.FC = () => {
     );
 };
 
-const { Title, Text } = Typography;
 export default ManageResources;

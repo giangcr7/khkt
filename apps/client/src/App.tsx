@@ -15,9 +15,8 @@ import LoginPage from './pages/Auth/Login';
 import PostDetail from './pages/Home/PostDetail';
 import ResourcesPage from './pages/Student/Resources';
 import TimelinePage from './pages/Timeline/TimelinePage';
-import GuidePage from './pages/Guide/GuidePage';
 import FAQPage from './pages/FAQ/FAQPage';
-
+import ChatWidget from './components/Shared/ChatWidget';
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
 import MyProjectPage from './pages/Student/MyProject';
@@ -29,7 +28,6 @@ import ManageProjects from './pages/Lecturer/ManageProjects';
 
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
-import AdminGuideManager from './pages/Admin/GuideManager';
 import AdminProjectManagement from './pages/Admin/ProjectManagement';
 import ManageEvents from './pages/Admin/ManageEvents';
 import ManageFAQ from './pages/Admin/ManageFAQ';
@@ -45,7 +43,7 @@ function App() {
     <BrowserRouter>
       {/* Navbar luôn hiển thị ở trên cùng */}
       <Navbar />
-
+<ChatWidget />
       <Routes>
         {/* ========================================================== */}
         {/* PUBLIC ROUTES: Bất kỳ ai cũng có thể truy cập */}
@@ -54,7 +52,6 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/timeline" element={<TimelinePage />} />
-        <Route path="/guide" element={<GuidePage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/post/:id" element={<PostDetail />} />
 
@@ -86,7 +83,6 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="manage-guide" element={<AdminGuideManager />} />
             <Route path="manage-projects" element={<AdminProjectManagement />} />
             <Route path="manage-events" element={<ManageEvents />} />
             <Route path="manage-faq" element={<ManageFAQ />} />

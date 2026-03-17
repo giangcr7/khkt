@@ -1,29 +1,25 @@
 import React, { useEffect, useState } from 'react';
-// Thêm Upload vào danh sách import
-import { Table, Button, Modal, Form, Input, Select, Tag, Space, Card, Typography, Popconfirm, message, Tooltip, Image, Upload } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Tag, Space, Card, Typography, Popconfirm, message, Image, Upload, Row, Col } from 'antd';
 import {
-    PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined,
-    RocketOutlined, BellOutlined, TrophyOutlined, LinkOutlined,
-    PictureOutlined, UploadOutlined // Thêm Icon Upload
+    PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined,
+    PictureOutlined, FilePdfOutlined, UploadOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
-// IMPORT SERVICE UPLOAD
 import { uploadService } from '../../services/upload.service';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 const ManageNews: React.FC = () => {
-    // ... Giữ nguyên các state cũ ...
-    const [posts, setPosts] = useState([]);
+    const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState<number | null>(null);
-    
-    // THÊM STATE ĐỂ QUẢN LÝ FILE UPLOAD
-    const [fileList, setFileList] = useState<any[]>([]);
+    const [currentRecord, setCurrentRecord] = useState<any>(null);
 
-    // 1. Tải danh sách bài viết (Giữ nguyên)
+    const [thumbList, setThumbList] = useState<any[]>([]);
+    const [fileAttachmentList, setFileAttachmentList] = useState<any[]>([]);
+
     const fetchPosts = async () => {
         setLoading(true);
         try {
@@ -36,53 +32,68 @@ const ManageNews: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchPosts(); }, []);
+    useEffect(() => {
+        fetchPosts();
+    }, []);
 
-    // 2. Mở Modal (Cập nhật để hiển thị ảnh cũ nếu có)
     const openModal = (record?: any) => {
-        setFileList([]); // Reset file list mỗi khi mở modal
+        setEditingId(record ? record.id : null);
+        setCurrentRecord(record ? record : null);
+        setThumbList([]);
+        setFileAttachmentList([]);
+
         if (record) {
-            setEditingId(record.id);
             form.setFieldsValue({
                 title: record.title,
                 type: record.type,
-                thumbnail: record.thumbnail, // Vẫn giữ field này ẩn để lưu URL
                 externalLink: record.externalLink,
-                content: record.content,
+                content: record.content
             });
-            // Nếu có ảnh cũ, hiển thị vào danh sách preview của Upload
+
             if (record.thumbnail) {
-                setFileList([{ uid: '-1', name: 'image.png', status: 'done', url: record.thumbnail }]);
+                setThumbList([{ uid: '-1', name: 'Ảnh bìa hiện tại', status: 'done', url: record.thumbnail }]);
+            }
+            if (record.externalLink) {
+                setFileAttachmentList([{ uid: '-2', name: 'Tài liệu đã đính kèm', status: 'done', url: record.externalLink }]);
             }
         } else {
-            setEditingId(null);
             form.resetFields();
             form.setFieldsValue({ type: 'NEWS' });
         }
+
         setIsModalOpen(true);
     };
 
-    // 3. XỬ LÝ LƯU DỮ LIỆU (TÍCH HỢP BƯỚC UPLOAD)
     const onFinish = async (values: any) => {
         setLoading(true);
-        try {
-            let finalImageUrl = values.thumbnail;
+        const hide = message.loading('Đang xử lý tải tệp lên...', 0);
 
-            // BƯỚC 1: Nếu có file mới được chọn, tiến hành upload lên Cloudinary
-            if (fileList.length > 0 && fileList[0].originFileObj) {
-                message.loading({ content: 'Đang tải ảnh lên Cloudinary...', key: 'up' });
-                // Truyền folder 'posts' để Cloudinary tự phân loại
-                finalImageUrl = await uploadService.uploadFile(fileList[0].originFileObj, 'posts');
-                message.success({ content: 'Tải ảnh thành công!', key: 'up' });
+        try {
+            // Xử lý giữ lại link cũ nếu có, hoặc nhận link mới nếu người dùng nhập tay
+            let finalThumbUrl = currentRecord?.thumbnail || "";
+            let finalFileUrl = values.externalLink || currentRecord?.externalLink || "";
+
+            // Nếu có Upload ảnh bìa mới
+            if (thumbList.length > 0 && thumbList[0].originFileObj) {
+                finalThumbUrl = await uploadService.uploadFile(thumbList[0].originFileObj, 'posts/thumbs');
+            } else if (thumbList.length === 0) {
+                finalThumbUrl = ""; // Xóa ảnh nếu người dùng gỡ file
             }
 
-            // BƯỚC 2: GỬI JSON (application/json)
+            // Nếu có Upload file PDF/Docx mới
+            if (fileAttachmentList.length > 0 && fileAttachmentList[0].originFileObj) {
+                finalFileUrl = await uploadService.uploadFile(fileAttachmentList[0].originFileObj, 'posts/documents');
+            } else if (fileAttachmentList.length === 0 && !values.externalLink) {
+                finalFileUrl = ""; // Xóa file nếu người dùng gỡ file và không nhập link
+            }
+
+            // Đóng gói JSON thuần túy gửi xuống Backend
             const payload = {
                 title: values.title,
                 content: values.content,
-                thumbnail: finalImageUrl, // Đây là URL string nhận về từ bước 1
                 type: values.type,
-                externalLink: values.externalLink,
+                thumbnail: String(finalThumbUrl),
+                externalLink: String(finalFileUrl)
             };
 
             if (editingId) {
@@ -90,100 +101,83 @@ const ManageNews: React.FC = () => {
                 message.success('Cập nhật bài viết thành công');
             } else {
                 await api.post('/posts', payload);
-                message.success('Đăng bài viết mới thành công');
+                message.success('Đăng bài thành công');
             }
+
             setIsModalOpen(false);
             fetchPosts();
+
         } catch (error: any) {
-            message.error('Lỗi khi lưu bài viết');
+            console.error(error);
+            message.error(error.response?.data?.message || 'Lỗi khi lưu bài viết');
         } finally {
+            hide();
             setLoading(false);
         }
     };
 
-    // ... Giữ nguyên handleDelete và columns ...
     const handleDelete = async (id: number) => {
         try {
             await api.delete(`/posts/${id}`);
-            message.success('Đã xóa bài viết vĩnh viễn');
+            message.success('Đã xóa bài viết');
             fetchPosts();
-        } catch (error) {
-            message.error('Lỗi khi thực hiện lệnh xóa');
+        } catch {
+            message.error('Lỗi khi xóa bài viết');
         }
     };
 
     const columns = [
         {
-            title: 'Ảnh',
-            dataIndex: 'thumbnail',
-            key: 'thumbnail',
-            width: 100,
-            render: (src: string) => src ? (
-                <Image src={src} width={50} height={50} style={{ objectFit: 'cover', borderRadius: 4 }} />
-            ) : (
-                <div style={{ width: 50, height: 50, background: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 4 }}>
-                    <PictureOutlined style={{ fontSize: 20, color: '#bfbfbf' }} />
-                </div>
-            )
-        },
-        {
-            title: 'Thông tin bài viết',
-            dataIndex: 'title',
-            key: 'title',
-            render: (text: string, record: any) => (
-                <Space direction="vertical" size={0}>
-                    <Text strong>{text}</Text>
-                    {record.externalLink && (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            <LinkOutlined /> <a href={record.externalLink} target="_blank" rel="noreferrer">{record.externalLink}</a>
-                        </Text>
-                    )}
+            title: 'Bài viết',
+            key: 'content',
+            render: (_: any, record: any) => (
+                <Space size="middle">
+                    <div style={{ position: 'relative' }}>
+                        {record.thumbnail ? (
+                            <Image
+                                src={record.thumbnail}
+                                width={70} height={50}
+                                style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #f0f0f0' }}
+                            />
+                        ) : (
+                            <div style={{ width: 70, height: 50, borderRadius: 8, background: '#f5f5f5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <PictureOutlined style={{ color: '#ccc', fontSize: 20 }} />
+                            </div>
+                        )}
+                    </div>
+                    <Space direction="vertical" size={0}>
+                        <Text strong style={{ fontSize: 14 }}>{record.title}</Text>
+                        <Paragraph type="secondary" ellipsis style={{ marginBottom: 0, maxWidth: 300 }}>
+                            {record.content}
+                        </Paragraph>
+                        {record.externalLink && (
+                            <Tag icon={<LinkOutlined />} color="blue" style={{ borderRadius: 10, marginTop: 4, cursor: 'pointer' }} onClick={() => window.open(record.externalLink)}>
+                                Tài liệu đính kèm
+                            </Tag>
+                        )}
+                    </Space>
                 </Space>
             )
         },
         {
             title: 'Phân loại',
             dataIndex: 'type',
-            key: 'type',
             width: 140,
             render: (type: string) => {
-                const config: any = {
-                    NEWS: { color: 'blue', text: 'Tin tức', icon: <BellOutlined /> },
-                    GUIDE: { color: 'green', text: 'Hướng dẫn', icon: <RocketOutlined /> },
-                    BLOG: { color: 'purple', text: 'Góc chia sẻ', icon: <FileTextOutlined /> },
-                    CONTEST: { color: 'volcano', text: 'Cuộc thi', icon: <TrophyOutlined /> }
-                };
-                const item = config[type] || config.NEWS;
-                return <Tag color={item.color} icon={item.icon}>{item.text}</Tag>;
+                const colors: Record<string, string> = { NEWS: 'blue', ANNOUNCEMENT: 'volcano' };
+                const labels: Record<string, string> = { NEWS: 'Tin tức', ANNOUNCEMENT: 'Thông báo' };
+                return <Tag color={colors[type] || 'default'} style={{ fontWeight: 500 }}>{labels[type] || type}</Tag>;
             }
         },
         {
-            title: 'Tác giả',
-            dataIndex: ['author', 'fullName'],
-            key: 'author',
-            width: 150,
-            render: (name: string) => name || 'Quản trị viên'
-        },
-        {
-            title: 'Hành động',
-            key: 'action',
+            title: 'Thao tác',
+            align: 'right' as const,
             width: 120,
-            align: 'center' as const,
             render: (_: any, record: any) => (
                 <Space>
-                    <Tooltip title="Chỉnh sửa">
-                        <Button type="primary" ghost icon={<EditOutlined />} onClick={() => openModal(record)} size="small" />
-                    </Tooltip>
-                    <Popconfirm
-                        title="Xóa bài viết?"
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Tooltip title="Xóa bài">
-                            <Button danger icon={<DeleteOutlined />} size="small" />
-                        </Tooltip>
+                    <Button type="text" shape="circle" icon={<EditOutlined style={{ color: '#1890ff' }} />} onClick={() => openModal(record)} />
+                    <Popconfirm title="Xóa bài viết này?" onConfirm={() => handleDelete(record.id)} okText="Xóa" cancelText="Hủy" okButtonProps={{ danger: true }}>
+                        <Button type="text" shape="circle" danger icon={<DeleteOutlined />} />
                     </Popconfirm>
                 </Space>
             )
@@ -191,61 +185,87 @@ const ManageNews: React.FC = () => {
     ];
 
     return (
-        <div style={{ padding: '24px' }}>
-            <Card
-                title={<Title level={3} style={{ margin: 0 }}>Quản trị Nội dung Tin tức & Blog</Title>}
-                extra={<Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => openModal()}>Đăng bài mới</Button>}
-                variant="borderless"
-            >
-                <Table dataSource={posts} columns={columns} rowKey="id" loading={loading} pagination={{ pageSize: 8 }} bordered />
+        <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto', minHeight: '100vh' }}>
+            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                    <div>
+                        <Title level={2} style={{ margin: 0 }}>Quản trị Tin tức</Title>
+                        <Text type="secondary">Cập nhật tin tức và thông báo từ nhà trường</Text>
+                    </div>
+                    <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => openModal()} style={{ borderRadius: 8 }}>
+                        Bài viết mới
+                    </Button>
+                </div>
+
+                <Table
+                    dataSource={posts}
+                    columns={columns}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{ pageSize: 6 }}
+                />
             </Card>
 
             <Modal
-                title={editingId ? "Cập nhật bài viết" : "Thêm bài viết mới"}
+                title={<Title level={4} style={{ margin: 0 }}>{editingId ? "✍️ Cập nhật bài viết" : "🚀 Soạn thảo bài viết"}</Title>}
                 open={isModalOpen}
                 onOk={() => form.submit()}
                 onCancel={() => setIsModalOpen(false)}
                 width={850}
                 confirmLoading={loading}
+                okText="Xác nhận lưu"
+                cancelText="Hủy bỏ"
+                style={{ top: 20 }}
             >
-                <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <Form.Item name="title" label="Tiêu đề bài viết" rules={[{ required: true }]}>
-                        <Input placeholder="Tiêu đề bài viết..." />
-                    </Form.Item>
+                <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
+                    <Row gutter={24}>
+                        <Col span={15}>
+                            <Form.Item name="title" label="Tiêu đề bài viết" rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}>
+                                <Input size="large" placeholder="Nhập tên bài viết..." style={{ borderRadius: 8 }} />
+                            </Form.Item>
 
-                    <div style={{ display: 'flex', gap: 16 }}>
-                        <Form.Item name="type" label="Phân loại" rules={[{ required: true }]} style={{ flex: 1 }}>
-                            <Select>
-                                <Select.Option value="NEWS">Tin tức</Select.Option>
-                                <Select.Option value="GUIDE">Hướng dẫn</Select.Option>
-                                <Select.Option value="BLOG">Blog</Select.Option>
-                                <Select.Option value="CONTEST">Cuộc thi</Select.Option>
-                            </Select>
-                        </Form.Item>
+                            <Form.Item name="content" label="Nội dung chi tiết" rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}>
+                                <Input.TextArea rows={10} placeholder="Viết nội dung chi tiết tại đây..." style={{ borderRadius: 8 }} />
+                            </Form.Item>
+                        </Col>
 
-                        {/* THAY THẾ Ô INPUT BẰNG COMPONENT UPLOAD */}
-                        <Form.Item label="Ảnh đại diện (Upload lên Cloudinary)" style={{ flex: 1 }}>
-                            <Upload
-                                listType="picture"
-                                maxCount={1}
-                                fileList={fileList}
-                                beforeUpload={() => false} // Không cho tự động upload, để onFinish xử lý
-                                onChange={({ fileList }) => setFileList(fileList)}
-                            >
-                                <Button icon={<UploadOutlined />} block>Chọn ảnh từ máy tính</Button>
-                            </Upload>
-                            {/* Input ẩn để giữ giá trị URL cũ khi sửa */}
-                            <Form.Item name="thumbnail" noStyle><Input type="hidden" /></Form.Item>
-                        </Form.Item>
-                    </div>
+                        <Col span={9}>
+                            <Form.Item name="type" label="Chuyên mục" rules={[{ required: true, message: 'Chọn chuyên mục!' }]}>
+                                <Select size="large" style={{ borderRadius: 8 }}>
+                                    <Select.Option value="NEWS">Tin tức chung</Select.Option>
+                                    <Select.Option value="ANNOUNCEMENT">Thông báo quan trọng</Select.Option>
+                                </Select>
+                            </Form.Item>
 
-                    <Form.Item name="externalLink" label="Liên kết đính kèm">
-                        <Input placeholder="https://..." prefix={<LinkOutlined />} />
-                    </Form.Item>
+                            <Form.Item label="Ảnh đại diện (Thumbnail)">
+                                <Upload.Dragger
+                                    listType="picture"
+                                    maxCount={1}
+                                    fileList={thumbList}
+                                    beforeUpload={() => false}
+                                    onChange={({ fileList }) => setThumbList(fileList)}
+                                    style={{ borderRadius: 12, background: '#fafafa' }}
+                                >
+                                    <p className="ant-upload-drag-icon"><PictureOutlined /></p>
+                                    <p className="ant-upload-text" style={{ fontSize: 13 }}>Kéo thả hoặc Click để chọn ảnh</p>
+                                </Upload.Dragger>
+                            </Form.Item>
 
-                    <Form.Item name="content" label="Nội dung" rules={[{ required: true }]}>
-                        <Input.TextArea rows={10} />
-                    </Form.Item>
+                            <Form.Item label="Tài liệu đính kèm (PDF/Word)">
+                                <Upload
+                                    maxCount={1}
+                                    fileList={fileAttachmentList}
+                                    beforeUpload={() => false}
+                                    onChange={({ fileList }) => setFileAttachmentList(fileList)}
+                                >
+                                    <Button icon={<UploadOutlined />} block style={{ borderRadius: 8 }}>Chọn file từ máy</Button>
+                                </Upload>
+                                <Form.Item name="externalLink" noStyle>
+                                    <Input placeholder="Hoặc dán URL tại đây..." style={{ marginTop: 8, borderRadius: 8 }} />
+                                </Form.Item>
+                            </Form.Item>
+                        </Col>
+                    </Row>
                 </Form>
             </Modal>
         </div>

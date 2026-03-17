@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Typography, Steps, Card, Row, Col, Statistic, Button, Progress, List, Tag, Avatar, Space, Badge, Empty, Spin, Divider, message } from 'antd';
+import { Typography, Card, Row, Col, Statistic, Button, Progress, List, Tag, Avatar, Badge, Empty, Spin, message } from 'antd';
 import {
-    FileSearchOutlined, TeamOutlined, FileProtectOutlined, CheckCircleOutlined,
-    ProjectOutlined, BellOutlined, UserAddOutlined, FireOutlined, MessageOutlined
+    BellOutlined, FireOutlined, MessageOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -14,8 +13,7 @@ const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const socketRef = useRef<Socket>();
-
+    const socketRef = useRef<Socket | null>(null);
     const [project, setProject] = useState<any>(null);
     const [recruitments, setRecruitments] = useState([]);
     const [rooms, setRooms] = useState<any[]>([]); 
@@ -26,19 +24,41 @@ const StudentDashboard: React.FC = () => {
 
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // Sử dụng useCallback để hàm có thể được gọi ổn định từ useEffect và các event handlers
+    // HÀM LẤY DỮ LIỆU ĐÃ ĐƯỢC CHIA NHỎ ĐỂ KHÔNG BỊ LỖI DOMINO
     const fetchDashboardData = useCallback(async () => {
+// --- 0. Lấy thông tin Đề tài ---
         try {
-            // 1. Lấy tin tuyển dụng
+            const projectRes = await api.get('/projects'); 
+                        const projectsArray = Array.isArray(projectRes.data) ? projectRes.data : (projectRes.data.data || []);
+            
+            if (projectsArray.length > 0) {
+                setProject(projectsArray[0]); 
+            } else {
+                setProject(null);
+            }
+        } catch (error) {
+            console.log("Lỗi lấy đề tài:", error);
+            setProject(null);
+        }
+        // --- 1. Lấy tin tuyển dụng ---
+        try {
             const recruitRes = await api.get('/recruitment'); 
             const recruitList = Array.isArray(recruitRes.data) ? recruitRes.data : (recruitRes.data.data || []);
             setRecruitments(recruitList.slice(0, 3)); 
+        } catch (error) {
+            console.error("Lỗi lấy tin tuyển dụng:", error);
+        }
 
-            // 2. Lấy danh sách phòng chat
+        // --- 2. Lấy danh sách phòng chat ---
+        try {
             const chatRes = await api.get('/chat/rooms');
             setRooms(chatRes.data.slice(0, 5)); 
+        } catch (error) {
+            console.error("Lỗi lấy phòng chat:", error);
+        }
 
-            // 3. Lấy sự kiện
+        // --- 3. Lấy sự kiện ---
+        try {
             const eventsRes = await api.get('/events');
             const eventList = Array.isArray(eventsRes.data) ? eventsRes.data : (eventsRes.data.data || []);
             
@@ -54,16 +74,19 @@ const StudentDashboard: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.error("Dashboard error:", error);
-        } finally {
-            setLoading(false);
+            console.error("Lỗi lấy sự kiện:", error);
         }
+
+        // TẮT VÒNG XOAY TRẠNG THÁI LOADING
+        setLoading(false);
     }, []);
 
+    // ĐÂY LÀ ĐOẠN BẠN BỊ THIẾU KHIẾN TRANG XOAY MÃI KHÔNG DỪNG
     useEffect(() => {
         // Khởi tạo socket
         socketRef.current = io('http://localhost:3000'); 
 
+        // 👉 GỌI HÀM LẤY DỮ LIỆU Ở ĐÂY
         fetchDashboardData();
 
         // Lắng nghe tin nhắn mới để cập nhật danh sách hội thoại real-time
@@ -78,10 +101,8 @@ const StudentDashboard: React.FC = () => {
                         messages: [newMessage],
                         updatedAt: new Date()
                     };
-                    // Sắp xếp phòng mới nhất lên đầu
                     return updatedRooms.sort((a, b) => dayjs(b.updatedAt).unix() - dayjs(a.updatedAt).unix());
                 } else {
-                    // Nếu là phòng chat mới hoàn toàn, load lại danh sách
                     fetchDashboardData();
                     return prevRooms;
                 }
@@ -97,11 +118,7 @@ const StudentDashboard: React.FC = () => {
         };
     }, [fetchDashboardData, currentUser.id]);
 
-    const getStatusStep = (status: string) => {
-        const steps: any = { 'PENDING': 0, 'APPROVED': 1, 'IN_PROGRESS': 2, 'COMPLETED': 4 };
-        return steps[status] || 0;
-    };
-
+    // GIAO DIỆN
     if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" tip="Đang đồng bộ..." /></div>;
 
     return (
@@ -162,7 +179,7 @@ const StudentDashboard: React.FC = () => {
                                         <List.Item.Meta
                                             avatar={
                                                 <Badge dot={lastMsg && !lastMsg.isRead && lastMsg.senderId !== currentUser.id}>
-                                                    <Avatar src={partner?.avatar}>{partner?.fullName?.charAt(0)}</Avatar>
+                                                    <Avatar src={partner?.avatar}>{partner?.fullName?.charAt(0) || 'U'}</Avatar>
                                                 </Badge>
                                             }
                                             title={<Text strong>{partner?.fullName}</Text>}
@@ -192,7 +209,7 @@ const StudentDashboard: React.FC = () => {
                                     onClick={() => navigate(`/student/recruitment/${item.id}`)}
                                 >
                                     <List.Item.Meta
-                                        avatar={<Avatar src={item.author?.avatar}>{item.author?.fullName[0]}</Avatar>}
+                                        avatar={<Avatar src={item.author?.avatar}>{item.author?.fullName?.[0] || 'U'}</Avatar>}
                                         title={<Text strong>{item.title}</Text>}
                                     />
                                 </List.Item>
