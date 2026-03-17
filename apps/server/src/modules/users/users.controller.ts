@@ -3,7 +3,6 @@ import {
     Param, ParseIntPipe, UseGuards, Request 
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-// SỬA TẠI ĐÂY: Đảm bảo tên file là jwt-auth.guard khớp với thực tế bạn đã gửi
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -14,7 +13,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
 @ApiTags('Users')
-@ApiBearerAuth() // Hiển thị nút nhập Token trong Swagger
+@ApiBearerAuth() 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
@@ -24,12 +23,10 @@ export class UsersController {
     @Get('profile')
     @ApiOperation({ summary: 'Lấy thông tin tài khoản đang đăng nhập' })
     getProfile(@Request() req) {
-        // req.user được gán từ JwtStrategy
         return this.usersService.findOneById(req.user.userId);
     }
 
     // 2. Lấy danh sách giảng viên
-    // Bổ sung @Public nếu bạn muốn trang Đăng ký/Tìm kiếm gọi được mà không cần Login
     @Public() 
     @Get('lecturers')
     @ApiOperation({ summary: 'Lấy danh sách giảng viên (Công khai)' })

@@ -10,11 +10,7 @@ export class ChatbotController {
     if (!message) {
       return { reply: "Bạn chưa nhập câu hỏi nào cả." };
     }
-    
-    // Đẩy câu hỏi xuống Service để gọi Python
-    const reply = await this.chatbotService.getChatbotResponse(message);
-    
-    // Trả về cho ReactJS
-    return { reply: reply };
+        const reply = await this.chatbotService.getChatbotResponse(message);
+        return { reply: reply };
   }
 }

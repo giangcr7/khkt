@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { FaqsService } from './faqs.service';
 import { CreateFaqDto, UpdateFaqDto } from './dto/faq.dto';
 
-@Controller('faqs') // Đường dẫn API: /faqs
+@Controller('faqs') 
 export class FaqsController {
     constructor(private readonly faqsService: FaqsService) { }
 

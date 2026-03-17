@@ -7,7 +7,6 @@ import {
     RobotOutlined, 
     UserOutlined 
 } from '@ant-design/icons';
-// QUAN TRỌNG: Gọi qua file api.ts của dự án thay vì axios thuần
 import api from '../../services/api'; 
 
 const { Text } = Typography;
@@ -47,7 +46,6 @@ const ChatWidget: React.FC = () => {
 
         try {
             // 2. GỌI API CỦA NESTJS (Backend chính)
-            // Thay vì gọi sang cổng 5000, chúng ta gọi endpoint NestJS mà bạn vừa tạo
             const res = await api.post('/chatbot/ask', { 
                 message: userText 
             });
@@ -111,7 +109,6 @@ const ChatWidget: React.FC = () => {
                                 justifyContent: msg.isBot ? 'flex-start' : 'flex-end', 
                                 marginBottom: 16 
                             }}>
-                                {/* SỬA LỖI Ở ĐÂY: Tự dùng Flexbox thay vì thẻ Space để đổi chiều linh hoạt */}
                                 <div style={{ 
                                     display: 'flex', 
                                     flexDirection: msg.isBot ? 'row' : 'row-reverse',

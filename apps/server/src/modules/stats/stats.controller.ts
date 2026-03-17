@@ -13,7 +13,7 @@ export class StatsController {
   constructor(private readonly statsService: StatsService) { }
 
   @Get('dashboard')
-  @Roles(Role.ADMIN) // Chỉ Admin mới xem được thống kê
+  @Roles(Role.ADMIN) 
   getDashboardStats() {
     return this.statsService.getDashboardStats();
   }

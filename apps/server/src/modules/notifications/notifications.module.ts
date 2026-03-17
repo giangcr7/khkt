@@ -4,9 +4,9 @@ import { NotificationsService } from './notifications.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule], // Để dùng được this.prisma
+  imports: [PrismaModule], 
   controllers: [NotificationsController],
   providers: [NotificationsService],
-  exports: [NotificationsService], // Xuất ra để ProjectService có thể gọi
+  exports: [NotificationsService], 
 })
 export class NotificationsModule {}

@@ -5,7 +5,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { Public } from '../auth/decorators/public.decorator';
 import { EventsService } from './events.service';
-import { CreateEventDto } from './dto/create-event.dto'; // Cần tạo DTO này
+import { CreateEventDto } from './dto/create-event.dto'; 
 import { UpdateEventDto } from './dto/update-event.dto';
 
 @Controller('events')
@@ -21,9 +21,7 @@ export class EventsController {
 
     @Post()
     @Roles(Role.ADMIN)
-    // TUYỆT ĐỐI không dùng multipart/form-data hay FileInterceptor ở đây
     async create(@Body() createEventDto: CreateEventDto) {
-        // createEventDto.fileUrl lúc này đã là URL string từ Cloudinary gửi lên
         return this.eventsService.create(createEventDto);
   }
 

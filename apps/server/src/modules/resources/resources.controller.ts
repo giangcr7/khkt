@@ -12,7 +12,6 @@ import { UploadService } from 'src/upload/upload.service';
 @ApiTags('Resources')
 @Controller('resources')
 export class ResourcesController {
-  // Tiêm (Inject) thêm UploadService vào constructor
   constructor(
     private readonly resourcesService: ResourcesService,
     private readonly uploadService: UploadService 
@@ -30,17 +29,14 @@ export class ResourcesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('file', {
-    // XOÁ diskStorage ĐI. Mặc định Multer sẽ lưu file vào Buffer (RAM) để stream lên Cloud
     limits: { fileSize: 20 * 1024 * 1024 } 
   }))
   @ApiConsumes('multipart/form-data')
-  async create( // Nhớ thêm async vì gọi Cloudinary mất thời gian
+  async create(
     @Body() body: { title: string; type: ResourceType; link?: string; description?: string },
     @UploadedFile() file: Express.Multer.File
   ) {
-    let finalUrl = body.link; // Mặc định là link video nếu có
-
-    // Nếu có file tải lên, đẩy thẳng lên Cloudinary
+    let finalUrl = body.link;
     if (file) {
       finalUrl = await this.uploadService.save(file, 'resources'); 
     }
@@ -53,7 +49,7 @@ export class ResourcesController {
       title: body.title,
       type: body.type,
       description: body.description,
-      fileUrl: finalUrl // Lúc này finalUrl là link https://res.cloudinary...
+      fileUrl: finalUrl 
     });
   }
 
@@ -64,16 +60,15 @@ export class ResourcesController {
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: 20 * 1024 * 1024 }
   }))
-  async update( // Thêm async
+  async update( 
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { title?: string; type?: ResourceType; link?: string; description?: string },
     @UploadedFile() file: Express.Multer.File
   ) {
     let newUrl: string | undefined = body.link;
 
-    // Nếu User có chọn file mới để upload
     if (file) {
-      newUrl = await this.uploadService.save(file, 'resources'); // Đẩy lên mây
+      newUrl = await this.uploadService.save(file, 'resources'); 
     }
 
     return this.resourcesService.update(id, {

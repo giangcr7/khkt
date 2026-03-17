@@ -5,13 +5,11 @@ import { UploadService } from './upload.service';
 @Controller('upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
-
-// src/upload/upload.controller.ts
 @Post()
 @UseInterceptors(FileInterceptor('file'))
 async uploadFile(
   @UploadedFile() file: Express.Multer.File,
-  @Query('folder') folder: string // Frontend gửi lên: /upload?folder=posts
+  @Query('folder') folder: string 
 ) {
   const url = await this.uploadService.save(file, folder);
   return { url };

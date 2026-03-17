@@ -21,7 +21,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
 
   useEffect(() => {
     // 1. Kết nối Socket
-    socketRef.current = io('http://localhost:3000'); // URL của Backend
+    socketRef.current = io('http://localhost:3000'); 
 
     // 2. Tham gia phòng chat
     socketRef.current.emit('joinRoom', roomId);

@@ -2,7 +2,7 @@ import React from 'react';
 import { Layout, Button, Typography, Space } from 'antd';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate } from 'react-router-dom';
-import AdminSidebar from '../components/Layout/AdminSidebar'; // Import sidebar vừa tách
+import AdminSidebar from '../components/Layout/AdminSidebar'; 
 
 const { Header, Content } = Layout;
 const { Text } = Typography;

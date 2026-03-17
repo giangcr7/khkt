@@ -7,7 +7,6 @@ export class StatsService {
   constructor(private prisma: PrismaService) { }
 
   async getDashboardStats() {
-    // Chạy song song tất cả các truy vấn để tối ưu hiệu năng
     const [
       totalStudents,
       totalLecturers,
@@ -26,7 +25,6 @@ export class StatsService {
       this.prisma.project.count({ where: { status: 'PENDING' } }),
       this.prisma.project.count({ where: { status: 'COMPLETED' } }),
       this.prisma.project.count({ where: { status: 'REJECTED' } }),
-      // Lấy danh sách Topic kèm số lượng đề tài thuộc mỗi Topic
       this.prisma.topic.findMany({
         select: {
           id: true,
@@ -46,7 +44,6 @@ export class StatsService {
       }),
     ]);
 
-    // Format lại dữ liệu nhật ký hoạt động
     const recentActivities = recentProjects.map(p => ({
       id: p.id,
       text: `Sinh viên ${p.student?.fullName || 'Ẩn danh'} đã đăng ký đề tài: ${p.name}`,
@@ -66,12 +63,11 @@ export class StatsService {
         inProgress: totalProjects - pendingProjects - completedProjects - rejectedProjects,
       },
       resources: totalResources,
-      topics: topicsData, // Trả về mảng topics để vẽ biểu đồ/danh sách
-      recentActivities: recentActivities, // Nhật ký hệ thống thực tế
+      topics: topicsData, 
+      recentActivities: recentActivities,
     };
   }
 
-  // Hàm phụ trợ để hiển thị thời gian thân thiện (Ví dụ: 5 phút trước)
   private formatRelativeTime(date: Date): string {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);

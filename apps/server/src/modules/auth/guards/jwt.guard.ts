@@ -11,18 +11,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     canActivate(context: ExecutionContext) {
-        // 1. Kiểm tra xem route này có gắn nhãn @Public không
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
             context.getHandler(),
             context.getClass(),
         ]);
-
-        // 2. Nếu có Public -> Cho phép truy cập ngay (return true)
         if (isPublic) {
             return true;
         }
-
-        // 3. Nếu không -> Gọi logic kiểm tra Token mặc định của Passport
         return super.canActivate(context);
     }
 }

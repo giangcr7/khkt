@@ -63,7 +63,6 @@ const Navbar: React.FC = () => {
         const currentRole = role?.toUpperCase();
         if (currentRole === 'STUDENT') {
             items.push({ key: '/student/my-project', label: 'Đề tài của tôi', icon: <ProjectOutlined />, onClick: () => navigate('/student/my-project') });
-            // Thêm menu Thông báo cho Sinh viên
             items.push({ key: '/student/notifications', label: 'Thông báo', icon: <BellOutlined />, onClick: () => navigate('/student/notifications') });
         } else if (currentRole === 'LECTURER') {
             items.push({ key: '/lecturer/manage-projects', label: 'Quản lý hướng dẫn', icon: <ProjectOutlined />, onClick: () => navigate('/lecturer/manage-projects') });

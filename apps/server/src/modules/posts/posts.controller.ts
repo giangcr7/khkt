@@ -17,12 +17,10 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN, Role.LECTURER)
   create(@Request() req, @Body() createPostDto: CreatePostDto) {
-    // req.user.userId lấy từ Token, createPostDto.thumbnail lấy từ URL Cloudinary
     return this.postsService.create(req.user.userId, createPostDto);
   }
 
   // 2. Xem danh sách (Ai cũng xem được - Không cần Guard)
-  // URL ví dụ: GET /posts?type=NEWS hoặc GET /posts?type=GUIDE
   @Get()
   findAll(@Query('type') type?: PostType) {
     return this.postsService.findAll(type);
@@ -39,7 +37,6 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN, Role.LECTURER)
   update(@Param('id', ParseIntPipe) id: number, @Body() updatePostDto: UpdatePostDto) {
-    // updatePostDto cũng sẽ chỉ nhận chuỗi JSON
     return this.postsService.update(id, updatePostDto);
   }
   // 5. Xóa bài viết (Chỉ ADMIN)

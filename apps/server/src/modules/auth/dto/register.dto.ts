@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, MinLength, IsString, IsOptional, IsEnum } from 'class-validator';
-import { Role } from '@prisma/client'; // Import Role từ Prisma để check đúng quyền
+import { Role } from '@prisma/client'; 
 
 export class RegisterDto {
     @IsEmail({}, { message: 'Email không hợp lệ' })

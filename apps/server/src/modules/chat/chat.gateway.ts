@@ -27,13 +27,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`Client disconnected: ${client.id}`);
   }
 
-  // Tham gia vào phòng chat
   @SubscribeMessage('joinRoom')
   handleJoinRoom(@MessageBody() roomId: number, @ConnectedSocket() client: Socket) {
     client.join(`room_${roomId}`);
   }
 
-  // Xử lý gửi tin nhắn real-time
   @SubscribeMessage('sendMessage')
   async handleMessage(
     @MessageBody() data: { roomId: number; senderId: number; content: string },

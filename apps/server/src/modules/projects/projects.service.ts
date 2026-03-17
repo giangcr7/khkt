@@ -5,13 +5,13 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AssignMentorDto } from './dto/assign-mentor.dto';
-import { NotificationsService } from '../notifications/notifications.service'; // Đảm bảo đúng đường dẫn
+import { NotificationsService } from '../notifications/notifications.service'; 
 
 @Injectable()
 export class ProjectsService {
     constructor(
         private prisma: PrismaService,
-        private notificationsService: NotificationsService // Inject NotificationsService
+        private notificationsService: NotificationsService 
     ) { }
 
     async create(userId: number, dto: CreateProjectDto) {
@@ -82,7 +82,7 @@ export class ProjectsService {
         return project;
     }
 
-    // 5. GIẢNG VIÊN: Duyệt đề tài hoặc Chấm điểm (TÍCH HỢP NOTIFICATION)
+    // 5. GIẢNG VIÊN: Duyệt đề tài hoặc Chấm điểm 
     async updateStatus(id: number, dto: UpdateProjectStatusDto) {
         let newProgress: number | undefined = undefined;
         if (dto.status === ProjectStatus.APPROVED) newProgress = 10;
@@ -99,7 +99,6 @@ export class ProjectsService {
             },
         });
 
-        // Bắn thông báo cho sinh viên về trạng thái mới
         await this.notificationsService.createNotification(
             project.studentId,
             'Cập nhật trạng thái đề tài',
@@ -110,7 +109,7 @@ export class ProjectsService {
         return project;
     }
 
-    // 6. ADMIN: Phân công lại Giảng viên (TÍCH HỢP NOTIFICATION)
+    // 6. ADMIN: Phân công lại Giảng viên 
     async assignMentor(projectId: number, dto: AssignMentorDto) {
         const project = await this.prisma.project.update({
             where: { id: projectId },
@@ -127,7 +126,6 @@ export class ProjectsService {
 
         return project;
     }
-    // Thêm vào trong class ProjectsService
     async createTopic(data: { name: string; description?: string }) {
         return this.prisma.topic.create({
             data: {
@@ -135,7 +133,6 @@ export class ProjectsService {
             },
         });
     }
-    // Hàm cập nhật (Sửa)
     async updateTopic(id: number, data: { name?: string; description?: string }) {
         const topic = await this.prisma.topic.findUnique({ where: { id } });
         if (!topic) {
@@ -149,11 +146,8 @@ export class ProjectsService {
             },
         });
     }
-
     // Hàm Xóa
     async deleteTopic(id: number) {
-        // Lưu ý: Nếu có đề tài nào đang dùng Topic này, có thể DB sẽ báo lỗi khóa ngoại (Foreign Key).
-        // Tùy theo logic mà bạn xử lý (Xoá luôn các đề tài con, hoặc không cho xoá nếu đang có người dùng)
         return this.prisma.topic.delete({
             where: { id },
         });
@@ -198,7 +192,7 @@ export class ProjectsService {
         });
     }
 
-    // 9. GIẢNG VIÊN: Phản hồi báo cáo tiến độ (TÍCH HỢP NOTIFICATION)
+    // 9. GIẢNG VIÊN: Phản hồi báo cáo tiến độ 
     async addProgressFeedback(progressId: number, feedback: string) {
         const progress = await this.prisma.projectProgress.update({
             where: { id: progressId },

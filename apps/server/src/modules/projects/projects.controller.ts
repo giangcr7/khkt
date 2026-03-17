@@ -140,17 +140,14 @@ export class ProjectsController {
     // ==========================================
     // QUẢN LÝ CHỦ ĐỀ (TOPICS)
     // ==========================================
-// 👇 THÊM ĐOẠN NÀY VÀO ĐỂ NHẬN YÊU CẦU TẠO MỚI 👇
     @Post('topics')
-    @Roles(Role.ADMIN, Role.LECTURER) // Chỉ Admin hoặc Giảng viên mới được tạo chủ đề (hoặc tùy logic của bạn)
+    @Roles(Role.ADMIN, Role.LECTURER) 
     @ApiOperation({ summary: 'Tạo mới chủ đề nghiên cứu' })
     createTopic(@Body() body: { name: string; description?: string }) {
-        // Gọi sang service để lưu vào Database
         return this.projectsService.createTopic(body); 
     }
-    // 1. SỬA CHỦ ĐỀ (UPDATE)
     @Patch('topics/:id')
-    @Roles(Role.ADMIN, Role.LECTURER) // Thường chỉ có Admin hoặc Giảng viên mới được sửa
+    @Roles(Role.ADMIN, Role.LECTURER) 
     @ApiOperation({ summary: 'Cập nhật thông tin chủ đề' })
     updateTopic(
         @Param('id', ParseIntPipe) id: number,
@@ -158,8 +155,6 @@ export class ProjectsController {
     ) {
         return this.projectsService.updateTopic(id, body);
     }
-
-    // 2. XÓA CHỦ ĐỀ (DELETE)
     @Delete('topics/:id')
     @Roles(Role.ADMIN, Role.LECTURER) 
     @ApiOperation({ summary: 'Xóa chủ đề' })

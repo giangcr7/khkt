@@ -11,7 +11,7 @@ export class CreatePostDto {
     content?: string;
 
     @IsOptional()
-    @IsString() // Dùng IsString thay vì IsUrl để tránh lỗi với chuỗi rỗng hoặc link nội bộ
+    @IsString() 
     thumbnail?: string;
 
     @IsOptional()
@@ -21,7 +21,4 @@ export class CreatePostDto {
     @IsNotEmpty({ message: 'Loại bài viết không được để trống' })
     @IsEnum(PostType, { message: 'Loại bài viết không hợp lệ' })
     type: PostType;
-
-    // XOÁ authorId ở đây! 
-    // Vì authorId lấy từ req.user trong Controller, không phải từ Body gửi lên.
 }

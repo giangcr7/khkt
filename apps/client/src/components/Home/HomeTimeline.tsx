@@ -12,8 +12,6 @@ interface HomeTimelineProps {
 
 const HomeTimeline: React.FC<HomeTimelineProps> = ({ events }) => {
     const navigate = useNavigate();
-
-    // Nếu không có sự kiện nào thì ẩn luôn section này cho gọn trang chủ
     if (!events || events.length === 0) return null;
 
     return (
@@ -36,7 +34,7 @@ const HomeTimeline: React.FC<HomeTimelineProps> = ({ events }) => {
                 {/* DANH SÁCH SỰ KIỆN */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {events.map((event, index) => {
-                        const isHot = event.isImportant; // Sự kiện quan trọng
+                        const isHot = event.isImportant; 
 
                         return (
                             <Card

@@ -1,5 +1,5 @@
 import {
-    DashboardOutlined, BookOutlined, ProjectOutlined,
+    DashboardOutlined,ProjectOutlined,
     CalendarOutlined, QuestionCircleOutlined, FileTextOutlined,
     FolderOpenOutlined, TagsOutlined, UserOutlined
 } from '@ant-design/icons';

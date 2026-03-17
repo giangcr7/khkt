@@ -14,7 +14,6 @@ import { ResourcesModule } from './modules/resources/resources.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { EventsModule } from './modules/events/events.module';
 import { FaqsModule } from './modules/faqs/faqs.module';
-// --- 1. IMPORT GUIDEMODULE ---
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RecruitmentModule } from './recruitment/recruitment.module';
 import { ChatModule } from './modules/chat/chat.module';
@@ -25,18 +24,13 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-
-    // Cấu hình thư mục Public để xem ảnh/tài liệu
     ServeStaticModule.forRoot({
-      // Nếu folder 'uploads' nằm ngang hàng với 'src', dùng path này:
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
 
     PrismaModule,
     AuthModule,
-
-    // Các tính năng chính
     UsersModule,
     ProjectsModule,
     PostsModule,

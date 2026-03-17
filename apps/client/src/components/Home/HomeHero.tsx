@@ -1,16 +1,15 @@
 import React from 'react';
 import { Input, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom'; // THÊM DÒNG NÀY
+import { useNavigate } from 'react-router-dom'; 
 
 const { Title, Paragraph } = Typography;
 const { Search } = Input;
 
 const HomeHero: React.FC = () => {
-    const navigate = useNavigate(); // KHAI BÁO BIẾN NÀY
+    const navigate = useNavigate(); 
 
     const handleSearch = (value: string) => {
         if (value.trim()) {
-            // Chuyển hướng sang trang Tin tức kèm theo từ khóa
             navigate(`/news?keyword=${encodeURIComponent(value)}`);
         }
     };
@@ -29,7 +28,7 @@ const HomeHero: React.FC = () => {
                     allowClear
                     enterButton="Tìm kiếm ngay"
                     size="large"
-                    onSearch={handleSearch} // GẮN HÀM SEARCH VÀO ĐÂY
+                    onSearch={handleSearch} 
                     style={{ borderRadius: 8 }}
                 />
             </div>

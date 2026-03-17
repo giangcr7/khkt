@@ -21,7 +21,6 @@ interface HomeNewsProps {
 const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
     const navigate = useNavigate();
 
-    // 1. Hàm tải file chuẩn tên (Blob xử lý để tránh tên file vvi9w...)
     const handleDownload = async (url: string, title: string) => {
         const hide = message.loading('Đang chuẩn bị tệp tin...', 0);
         try {
@@ -47,7 +46,6 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
         }
     };
 
-    // 2. Hàm render ảnh bìa - THÔNG MINH HƠN CHO MỌI LOẠI FILE
     const renderCardCover = (item: any) => {
         const thumbnailUrl = item.thumbnail;
         const fileUrl = (item.externalLink || "").toLowerCase();
@@ -58,7 +56,7 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
         const isWord = fileUrl.match(/\.(doc|docx)$/) != null;
 
         const coverStyle: React.CSSProperties = {
-            height: 220, // Tăng chiều cao lên chút cho đẹp
+            height: 220, 
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -69,7 +67,6 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
 
         const defaultCoverImage = "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?q=80&w=800&auto=format&fit=crop";
 
-        // ƯU TIÊN 1: Nếu admin có upload ảnh bìa thủ công
         if (thumbnailUrl && thumbnailUrl !== "null" && thumbnailUrl.trim() !== "") {
             return (
                 <div style={coverStyle}>
@@ -78,9 +75,7 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
             );
         }
 
-        // ƯU TIÊN 2: NẾU KHÔNG CÓ THUMBNAIL, xử lý dựa trên File đính kèm
         if (fileUrl) {
-            // NẾU LÀ ẢNH -> Lấy luôn làm ảnh bìa
             if (isImage) {
                 return (
                     <div style={coverStyle}>
@@ -92,7 +87,6 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                 );
             }
 
-            // NẾU LÀ PDF -> Dùng Cloudinary để lấy ảnh trang đầu
             if (isPDF && fileUrl.includes('cloudinary')) {
                 const pdfThumb = item.externalLink.replace(/\.pdf$/i, '.jpg');
                 return (
@@ -102,7 +96,7 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                             alt="PDF Preview" 
                             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
                             onError={(e) => {
-                                (e.target as HTMLImageElement).src = defaultCoverImage; // Fallback về ảnh mặc định nếu Cloudinary lỗi
+                                (e.target as HTMLImageElement).src = defaultCoverImage; 
                             }}
                         />
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.1)' }}></div>
@@ -113,7 +107,6 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                 );
             }
 
-            // NẾU LÀ FILE KHÁC (WORD, EXCEL...) -> Hiện ảnh mặc định + Icon nhận diện
             return (
                 <div style={coverStyle}>
                     <img src={defaultCoverImage} alt="default" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -125,7 +118,6 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
             );
         }
 
-        // MẶC ĐỊNH: Nếu không có ảnh, cũng không đính kèm file gì cả
         return (
             <div style={coverStyle}>
                 <img src={defaultCoverImage} alt="default" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

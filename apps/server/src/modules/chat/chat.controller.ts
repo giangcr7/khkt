@@ -2,17 +2,16 @@ import { Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard'; 
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { PrismaService } from '../../prisma/prisma.service'; // Đảm bảo đúng đường dẫn
+import { PrismaService } from '../../prisma/prisma.service'; 
 
 @ApiTags('chat')
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ChatController {
-  // Loại bỏ prisma: any
   constructor(
     private readonly chatService: ChatService,
-    private readonly prisma: PrismaService // Inject PrismaService chuẩn
+    private readonly prisma: PrismaService 
   ) {}
 
   @Post('rooms')

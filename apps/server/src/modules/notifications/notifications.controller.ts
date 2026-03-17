@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, UseGuards, Request } from '@nestjs/common'; // Thêm Patch, Param
+import { Controller, Get, Patch, Param, UseGuards, Request } from '@nestjs/common'; 
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { NotificationsService } from './notifications.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -12,7 +12,6 @@ export class NotificationsController {
   @Get('my')
   @ApiOperation({ summary: 'Sinh viên lấy danh sách thông báo của mình' })
   async getMyNotifications(@Request() req) {
-    // Lưu ý: req.user.userId hoặc req.user.id tùy vào cách bạn gán ở JwtStrategy
     return this.notificationsService.getMyNotifications(req.user.userId || req.user.id);
   }
 

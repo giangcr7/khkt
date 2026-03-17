@@ -15,6 +15,6 @@ export class CreateResourceDto {
     fileUrl: string;
 
     @IsString()
-    @IsOptional() // Cho phép để trống
+    @IsOptional()
     description?: string;
 }

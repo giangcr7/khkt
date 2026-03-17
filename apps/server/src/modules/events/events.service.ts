@@ -14,13 +14,11 @@ export class EventsService {
     }
 
     async create(dto: CreateEventDto) {
-        // Dữ liệu từ JSON đã được class-validator đảm bảo kiểu dữ liệu
         return this.prisma.event.create({
             data: {
                 ...dto,
                 startDate: new Date(dto.startDate),
                 endDate: dto.endDate ? new Date(dto.endDate) : null,
-                // Không cần String(...) === 'true' vì DTO đã ép kiểu Boolean
             },
         });
     }
