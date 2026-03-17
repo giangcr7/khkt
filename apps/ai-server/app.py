@@ -29,6 +29,9 @@ with open('nckh_data.json', 'r', encoding='utf-8') as f:
 print("✅ Tải mô hình thành công! AI đã sẵn sàng.")
 
 # --- 2. HÀM XỬ LÝ CÂU HỎI ---
+@app.route('/', methods=['GET', 'HEAD'])
+def health_check():
+    return "AI Server is Running and Healthy!", 200
 @app.route('/api/chat', methods=['POST'])
 def chat():
     # Nhận tin nhắn từ NestJS gửi sang
