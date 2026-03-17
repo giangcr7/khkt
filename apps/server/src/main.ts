@@ -34,10 +34,8 @@ async function bootstrap() {
   });
 
   // 4. Port & Listen
-  const port = process.env.PORT || 10000; // Ưu tiên cổng của Render
+  const port = process.env.PORT || 10000; 
   await app.listen(port, '0.0.0.0');
   console.log(`Application is running on port: ${port}`);
 }
-
-// GỌI HÀM Ở NGOÀI DẤU NGOẶC NHỌN
 bootstrap();
