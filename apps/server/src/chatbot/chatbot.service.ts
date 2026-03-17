@@ -1,13 +1,16 @@
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
 @Injectable()
 export class ChatbotService {
   constructor(private readonly httpService: HttpService) {}
 
   async getChatbotResponse(message: string): Promise<string> {
     try {
-      // 1. Lấy URL từ biến môi trường, nếu không có thì mới dùng localhost để test máy
+      // Lấy URL AI Server từ biến môi trường trên Render
       const aiServerUrl = process.env.AI_SERVER_URL || 'http://127.0.0.1:5000';
       
-      // 2. Gọi sang link động
       const response = await firstValueFrom(
         this.httpService.post(`${aiServerUrl}/api/chat`, {
           message: message,
