@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { List, Card, Button, Tag, Tabs, message, Empty, Typography, Space, Tooltip } from 'antd';
+import { List, Card, Button, Tag, Tabs, message, Typography, Space, Tooltip } from 'antd';
 import { 
     DownloadOutlined, 
     YoutubeOutlined, 
-    FilePdfOutlined, 
     FileWordOutlined, 
     VideoCameraOutlined,
     EyeOutlined,
     FileTextOutlined
 } from '@ant-design/icons';
-import api from '../../services/api';
+import api from '../services/api';
 
 const { Title, Text } = Typography;
 
@@ -48,8 +47,6 @@ const ResourcesPage: React.FC = () => {
             overflow: 'hidden',
             background: '#f5f5f5',
         };
-
-        // Nếu là VIDEO: Hiển thị Gradient và Icon Video
         if (isVideo) {
             return (
                 <div style={{ ...coverStyle, background: 'linear-gradient(135deg, #ff7875 0%, #ff4d4f 100%)' }}>
@@ -61,7 +58,6 @@ const ResourcesPage: React.FC = () => {
 
         // Nếu là PDF: Sử dụng Cloudinary Transformation để biến trang 1 thành ảnh JPG
         if (isPDF) {
-            // Thủ thuật: Thay đuôi .pdf thành .jpg trong URL Cloudinary
             const thumbnailUrl = url.replace(/\.pdf$/i, '.jpg');
             return (
                 <div style={coverStyle}>
@@ -69,7 +65,6 @@ const ResourcesPage: React.FC = () => {
                         src={thumbnailUrl} 
                         alt="Document Preview" 
                         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
-                        // Dự phòng nếu Cloudinary chưa kịp render ảnh
                         onError={(e) => {
                             (e.target as any).src = "https://placehold.co/400x500/ff7875/ffffff?text=PDF+Preview";
                         }}
