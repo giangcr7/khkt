@@ -13,10 +13,10 @@ import ProtectedRoute from './components/Shared/ProtectedRoute';
 import HomePage from './pages/Home/HomePage';
 import LoginPage from './pages/Auth/Login';
 import PostDetail from './pages/Home/PostDetail';
-import ResourcesPage from './pages/Student/Resources';
 import TimelinePage from './pages/Timeline/TimelinePage';
 import FAQPage from './pages/FAQ/FAQPage';
 import ChatWidget from './components/Shared/ChatWidget';
+
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
 import MyProjectPage from './pages/Student/MyProject';
@@ -37,6 +37,8 @@ import ManageTopics from './pages/Admin/ManageTopics';
 import UserManagement from './pages/Admin/UserManagement';
 import RecruitmentList from './pages/Student/RecruitmentList';
 import RecruitmentDetailPage from './pages/Student/RecruitmentDetailPage';
+import NewsListPage from './pages/NewsListPage';
+import ResourcesPage from './pages/Resources';
 
 function App() {
   return (
@@ -50,11 +52,11 @@ function App() {
         {/* ========================================================== */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/resources" element={<ResourcesPage/>} />
         <Route path="/timeline" element={<TimelinePage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/post/:id" element={<PostDetail />} />
-
+        <Route path="/news" element={<NewsListPage />} />
         {/* ========================================================== */}
         {/* PROTECTED ROUTES: Phải đăng nhập & đúng quyền hạn */}
         {/* ========================================================== */}

@@ -43,8 +43,6 @@ const FAQPage: React.FC = () => {
                     Tổng hợp các giải đáp về quy chế, thể lệ và hướng dẫn thực hiện Nghiên cứu khoa học dành cho sinh viên.
                 </Paragraph>
             </div>
-
-            {/* KHU VỰC NỘI DUNG (Nổi lên trên banner một chút để tạo độ sâu) */}
             <Content style={{ maxWidth: '900px', margin: '-40px auto 0', width: '100%', padding: '0 20px' }}>
                 
                 {/* GỢI Ý CHATBOT NỔI BẬT */}

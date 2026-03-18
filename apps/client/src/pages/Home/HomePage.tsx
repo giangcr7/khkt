@@ -16,7 +16,7 @@ const { Content } = Layout;
 const HomePage: React.FC = () => {
     const [data, setData] = useState<any>({
         stats: null,
-        events: [],    // Sẽ chứa dữ liệu Lộ trình (Timeline)
+        events: [],   
         faqs: [],
         posts: [],
         resources: [], 
@@ -38,7 +38,7 @@ const HomePage: React.FC = () => {
 
                 setData({
                     stats: resStats.data,
-                    events: resEvents.data, // Lưu mảng sự kiện vào state
+                    events: resEvents.data, 
                     faqs: resFaqs.data,
                     posts: sortedPosts.slice(0, 3), 
                     resources: resResources.data.slice(0, 4), 
