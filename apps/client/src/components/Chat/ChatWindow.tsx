@@ -91,7 +91,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
         width: 350, 
         position: 'fixed', 
         bottom: 20, 
-        right: 20, 
+        right: 90, 
         zIndex: 1000, 
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         borderRadius: '12px'
