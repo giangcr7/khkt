@@ -38,7 +38,7 @@ import UserManagement from './pages/Admin/UserManagement';
 import RecruitmentList from './pages/Student/RecruitmentList';
 import RecruitmentDetailPage from './pages/Student/RecruitmentDetailPage';
 import NewsListPage from './pages/NewsListPage';
-import ResourcesPage from './pages/Resources';
+import ResourcesPage from './pages/Student/Resources';
 
 function App() {
   return (

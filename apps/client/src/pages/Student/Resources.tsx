@@ -8,7 +8,7 @@ import {
     EyeOutlined,
     FileTextOutlined
 } from '@ant-design/icons';
-import api from '../services/api';
+import api from '../../services/api';
 
 const { Title, Text } = Typography;
 
