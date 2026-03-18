@@ -77,16 +77,18 @@ const StudentDashboard: React.FC = () => {
         }
         setLoading(false);
     }, []);
-    useEffect(() => {
-        // Khởi tạo socket
-        socketRef.current = io('https://khkt-backend.onrender.com'); 
+useEffect(() => {
+        // 1. Khởi tạo socket với link Render online
+        const socket = io('https://khkt-backend.onrender.com');
+        socketRef.current = socket;
 
-        // 👉 GỌI HÀM LẤY DỮ LIỆU Ở ĐÂY
+        // 2. Lấy dữ liệu Dashboard ban đầu
         fetchDashboardData();
-        socketRef.current.on('receiveMessage', (newMessage) => {
+
+        // 3. LẮNG NGHE TIN NHẮN ĐẾN (Event 'receiveMessage' khớp với Gateway của sếp)
+        socket.on('receiveMessage', (newMessage: any) => {
             setRooms((prevRooms) => {
                 const roomIndex = prevRooms.findIndex(r => r.id === newMessage.roomId);
-                
                 if (roomIndex !== -1) {
                     const updatedRooms = [...prevRooms];
                     updatedRooms[roomIndex] = {
@@ -96,20 +98,27 @@ const StudentDashboard: React.FC = () => {
                     };
                     return updatedRooms.sort((a, b) => dayjs(b.updatedAt).unix() - dayjs(a.updatedAt).unix());
                 } else {
-                    fetchDashboardData();
+                    fetchDashboardData(); // Nếu có phòng chat mới từ người lạ, load lại list
                     return prevRooms;
                 }
             });
 
-            if (newMessage.senderId !== currentUser.id) {
-                message.info(`Tin nhắn mới từ ${newMessage.sender.fullName}`);
+            // Chỉ hiện thông báo nếu mình không phải người gửi và KHÔNG đang mở cửa sổ chat đó
+            if (newMessage.senderId !== currentUser.id && activeChat?.roomId !== newMessage.roomId) {
+                message.info(`Tin nhắn mới từ ${newMessage.sender?.fullName}`);
             }
         });
 
+        // 4. QUAN TRỌNG: Nếu đang mở cửa sổ chat, bảo server cho tôi vào phòng đó ngay
+        if (activeChat) {
+            socket.emit('joinRoom', activeChat.roomId); 
+        }
+
         return () => {
-            socketRef.current?.disconnect();
+            socket.disconnect(); // Ngắt kết nối khi chuyển trang để tránh rò rỉ bộ nhớ
         };
-    }, [fetchDashboardData, currentUser.id]);
+        // Thêm activeChat.roomId vào đây để mỗi khi đổi người chat, socket sẽ join lại phòng mới
+    }, [fetchDashboardData, currentUser.id, activeChat?.roomId]);
 
     // GIAO DIỆN
     if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" tip="Đang đồng bộ..." /></div>;
