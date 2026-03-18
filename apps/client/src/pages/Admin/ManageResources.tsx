@@ -14,7 +14,7 @@ const ManageResources: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [fileList, setFileList] = useState<any[]>([]);
-    const [currentRecord, setCurrentRecord] = useState<any>(null);
+    const [setCurrentRecord] = useState<any>(null);
 
     const [form] = Form.useForm();
     const typeValue = Form.useWatch('type', form);
@@ -66,7 +66,7 @@ const ManageResources: React.FC = () => {
         try {
             const formData = new FormData();
             formData.append('title', values.title);
-            formData.append('type', values.type); // Lúc này type chỉ gửi TEMPLATE hoặc VIDEO
+            formData.append('type', values.type); 
             formData.append('description', values.description || '');
 
             if (values.type === 'VIDEO') {

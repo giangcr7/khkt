@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Tag, Space, Card, Typography, Popconfirm, message, Image, Upload, Row, Col } from 'antd';
+import { Table, Button, Modal, Form, Input, Space, Card, Typography, Popconfirm, message, Image, Upload, Row, Col, Tag } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined,
-    PictureOutlined, FilePdfOutlined, UploadOutlined
+    PictureOutlined, UploadOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
 import { uploadService } from '../../services/upload.service';
@@ -45,7 +45,6 @@ const ManageNews: React.FC = () => {
         if (record) {
             form.setFieldsValue({
                 title: record.title,
-                type: record.type,
                 externalLink: record.externalLink,
                 content: record.content
             });
@@ -58,7 +57,6 @@ const ManageNews: React.FC = () => {
             }
         } else {
             form.resetFields();
-            form.setFieldsValue({ type: 'NEWS' });
         }
 
         setIsModalOpen(true);
@@ -69,7 +67,6 @@ const ManageNews: React.FC = () => {
         const hide = message.loading('Đang xử lý tải tệp lên...', 0);
 
         try {
-            // Xử lý giữ lại link cũ nếu có, hoặc nhận link mới nếu người dùng nhập tay
             let finalThumbUrl = currentRecord?.thumbnail || "";
             let finalFileUrl = values.externalLink || currentRecord?.externalLink || "";
 
@@ -77,21 +74,21 @@ const ManageNews: React.FC = () => {
             if (thumbList.length > 0 && thumbList[0].originFileObj) {
                 finalThumbUrl = await uploadService.uploadFile(thumbList[0].originFileObj, 'posts/thumbs');
             } else if (thumbList.length === 0) {
-                finalThumbUrl = ""; // Xóa ảnh nếu người dùng gỡ file
+                finalThumbUrl = ""; 
             }
 
             // Nếu có Upload file PDF/Docx mới
             if (fileAttachmentList.length > 0 && fileAttachmentList[0].originFileObj) {
                 finalFileUrl = await uploadService.uploadFile(fileAttachmentList[0].originFileObj, 'posts/documents');
             } else if (fileAttachmentList.length === 0 && !values.externalLink) {
-                finalFileUrl = ""; // Xóa file nếu người dùng gỡ file và không nhập link
+                finalFileUrl = ""; 
             }
 
             // Đóng gói JSON thuần túy gửi xuống Backend
             const payload = {
                 title: values.title,
                 content: values.content,
-                type: values.type,
+                type: 'NEWS', // <-- GẮN CỨNG MẶC ĐỊNH LÀ NEWS ĐỂ BACKEND KHÔNG BÁO LỖI
                 thumbnail: String(finalThumbUrl),
                 externalLink: String(finalFileUrl)
             };
@@ -159,16 +156,7 @@ const ManageNews: React.FC = () => {
                 </Space>
             )
         },
-        {
-            title: 'Phân loại',
-            dataIndex: 'type',
-            width: 140,
-            render: (type: string) => {
-                const colors: Record<string, string> = { NEWS: 'blue', ANNOUNCEMENT: 'volcano' };
-                const labels: Record<string, string> = { NEWS: 'Tin tức', ANNOUNCEMENT: 'Thông báo' };
-                return <Tag color={colors[type] || 'default'} style={{ fontWeight: 500 }}>{labels[type] || type}</Tag>;
-            }
-        },
+        // ĐÃ XÓA CỘT PHÂN LOẠI Ở ĐÂY CHO GỌN BẢNG
         {
             title: 'Thao tác',
             align: 'right' as const,
@@ -190,7 +178,7 @@ const ManageNews: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                     <div>
                         <Title level={2} style={{ margin: 0 }}>Quản trị Tin tức</Title>
-                        <Text type="secondary">Cập nhật tin tức và thông báo từ nhà trường</Text>
+                        <Text type="secondary">Cập nhật tin tức từ nhà trường</Text>
                     </div>
                     <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => openModal()} style={{ borderRadius: 8 }}>
                         Bài viết mới
@@ -230,13 +218,6 @@ const ManageNews: React.FC = () => {
                         </Col>
 
                         <Col span={9}>
-                            <Form.Item name="type" label="Chuyên mục" rules={[{ required: true, message: 'Chọn chuyên mục!' }]}>
-                                <Select size="large" style={{ borderRadius: 8 }}>
-                                    <Select.Option value="NEWS">Tin tức chung</Select.Option>
-                                    <Select.Option value="ANNOUNCEMENT">Thông báo quan trọng</Select.Option>
-                                </Select>
-                            </Form.Item>
-
                             <Form.Item label="Ảnh đại diện (Thumbnail)">
                                 <Upload.Dragger
                                     listType="picture"

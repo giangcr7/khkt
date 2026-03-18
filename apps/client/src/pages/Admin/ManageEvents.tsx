@@ -9,7 +9,6 @@ import {
     EditOutlined, CalendarOutlined, DownloadOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
-// 1. IMPORT SERVICE UPLOAD
 import { uploadService } from '../../services/upload.service';
 import dayjs from 'dayjs';
 
