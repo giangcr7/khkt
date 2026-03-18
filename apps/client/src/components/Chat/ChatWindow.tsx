@@ -99,24 +99,41 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
       bodyStyle={{ padding: 0 }}
     >
       <div style={{ height: 300, overflowY: 'auto', padding: 16, backgroundColor: '#f5f5f5' }}>
-        <List
-          dataSource={messages}
-          renderItem={(msg) => (
-            <div style={{ textAlign: msg.senderId === currentUser.id ? 'right' : 'left', marginBottom: 12 }}>
-              <div style={{ 
-                display: 'inline-block', 
-                padding: '8px 12px', 
-                borderRadius: '12px', 
-                backgroundColor: msg.senderId === currentUser.id ? '#1890ff' : '#fff',
-                color: msg.senderId === currentUser.id ? '#fff' : '#000',
-                maxWidth: '80%',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-              }}>
-                {msg.content}
-              </div>
-            </div>
-          )}
-        />
+<List
+  dataSource={messages}
+  renderItem={(msg) => {
+    // Ép kiểu về String để so sánh cho chắc chắn, tránh lỗi lệch kiểu dữ liệu
+    const isMine = String(msg.senderId) === String(currentUser.id);
+
+    return (
+      <div style={{ 
+        textAlign: isMine ? 'right' : 'left', // Mình gửi thì bên phải, họ gửi thì bên trái
+        marginBottom: 12,
+        padding: '0 10px' 
+      }}>
+        {/* Hiện tên người gửi nếu là tin nhắn của đối phương (tùy chọn) */}
+        {!isMine && (
+          <div style={{ fontSize: '10px', color: '#8c8c8c', marginLeft: '8px', marginBottom: '2px' }}>
+            {receiver.fullName}
+          </div>
+        )}
+
+        <div style={{ 
+          display: 'inline-block', 
+          padding: '8px 12px', 
+          borderRadius: isMine ? '12px 12px 0 12px' : '12px 12px 12px 0', // Bo góc kiểu tin nhắn Messenger
+          backgroundColor: isMine ? '#1890ff' : '#e8e8e8', // Mình màu xanh, họ màu xám nhạt
+          color: isMine ? '#fff' : '#000', // Chữ trắng trên nền xanh, chữ đen trên nền xám
+          maxWidth: '80%',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+          textAlign: 'left' // Nội dung chữ luôn căn trái trong bong bóng
+        }}>
+          {msg.content}
+        </div>
+      </div>
+    );
+  }}
+/>
         {/* Điểm neo để cuộn chuột */}
         <div ref={scrollRef} />
       </div>
