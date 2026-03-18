@@ -18,5 +18,5 @@ export interface CreateProjectDTO {
     name: string;
     topic: string;
     description: string;
-    mentorId: number; // ID của giảng viên muốn đăng ký
+    mentorId: number; 
 }

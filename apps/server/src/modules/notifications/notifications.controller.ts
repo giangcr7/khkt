@@ -14,8 +14,6 @@ export class NotificationsController {
   async getMyNotifications(@Request() req) {
     return this.notificationsService.getMyNotifications(req.user.userId || req.user.id);
   }
-
-  // BỔ SUNG HÀM NÀY:
   @Patch(':id/read')
   @ApiOperation({ summary: 'Đánh dấu thông báo là đã đọc' })
   async markAsRead(@Param('id') id: string) {

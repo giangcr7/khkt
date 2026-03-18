@@ -17,14 +17,13 @@ const StudentDashboard: React.FC = () => {
     const [project, setProject] = useState<any>(null);
     const [recruitments, setRecruitments] = useState([]);
     const [rooms, setRooms] = useState<any[]>([]); 
-    const [unreadNotis, setUnreadNotis] = useState(0);
+    const [unreadNotis] = useState(0);
     const [deadline, setDeadline] = useState<{ days: number; date: string; title: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeChat, setActiveChat] = useState<{ roomId: number, receiver: any } | null>(null);
 
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // HÀM LẤY DỮ LIỆU ĐÃ ĐƯỢC CHIA NHỎ ĐỂ KHÔNG BỊ LỖI DOMINO
     const fetchDashboardData = useCallback(async () => {
 // --- 0. Lấy thông tin Đề tài ---
         try {
@@ -76,20 +75,14 @@ const StudentDashboard: React.FC = () => {
         } catch (error) {
             console.error("Lỗi lấy sự kiện:", error);
         }
-
-        // TẮT VÒNG XOAY TRẠNG THÁI LOADING
         setLoading(false);
     }, []);
-
-    // ĐÂY LÀ ĐOẠN BẠN BỊ THIẾU KHIẾN TRANG XOAY MÃI KHÔNG DỪNG
     useEffect(() => {
         // Khởi tạo socket
         socketRef.current = io('http://localhost:3000'); 
 
         // 👉 GỌI HÀM LẤY DỮ LIỆU Ở ĐÂY
         fetchDashboardData();
-
-        // Lắng nghe tin nhắn mới để cập nhật danh sách hội thoại real-time
         socketRef.current.on('receiveMessage', (newMessage) => {
             setRooms((prevRooms) => {
                 const roomIndex = prevRooms.findIndex(r => r.id === newMessage.roomId);

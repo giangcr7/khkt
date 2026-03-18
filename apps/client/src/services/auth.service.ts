@@ -22,12 +22,12 @@ export const authService = {
      */
   saveToken(token: string, role: string, user: any) {
     localStorage.setItem('token', token);
-    localStorage.setItem('role', role); // LƯU TRỰC TIẾP, không JSON.stringify
-    localStorage.setItem('user', JSON.stringify(user)); // Object thì mới stringify
+    localStorage.setItem('role', role); 
+    localStorage.setItem('user', JSON.stringify(user)); 
 },
     // Đăng xuất và dọn dẹp bộ nhớ
     logout: () => {
-        localStorage.clear(); // Xóa tất cả để tránh xung đột dữ liệu cũ
+        localStorage.clear(); 
         window.location.href = '/';
     }
 };

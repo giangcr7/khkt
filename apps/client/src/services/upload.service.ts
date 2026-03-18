@@ -7,15 +7,15 @@ export const uploadService = {
    */
   uploadFile: async (file: File, folder: string): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file); // 'file' phải khớp với FileInterceptor ở Backend
+    formData.append('file', file); 
 
     // Gửi kèm tham số folder qua query string
     const response = await api.post(`/upload?folder=${folder}`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data', // Ghi đè header mặc định để gửi file
+        'Content-Type': 'multipart/form-data', 
       },
     });
 
-    return response.data.url; // Trả về duy nhất chuỗi URL
+    return response.data.url; 
   },
 };
