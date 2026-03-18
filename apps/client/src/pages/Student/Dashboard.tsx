@@ -79,7 +79,7 @@ const StudentDashboard: React.FC = () => {
     }, []);
     useEffect(() => {
         // Khởi tạo socket
-        socketRef.current = io('http://localhost:3000'); 
+        socketRef.current = io('https://khkt-backend.onrender.com'); 
 
         // 👉 GỌI HÀM LẤY DỮ LIỆU Ở ĐÂY
         fetchDashboardData();
