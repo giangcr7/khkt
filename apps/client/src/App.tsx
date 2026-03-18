@@ -78,9 +78,11 @@ function App() {
           <Route path="/lecturer" element={<LecturerLayout />}>
             <Route index element={<LecturerDashboard />} />
             <Route path="manage-projects" element={<ManageProjects />} />
+            
+            {/* THÊM DÒNG NÀY ĐỂ NHẬN ID KHI XEM CHI TIẾT */}
+            <Route path="manage-projects/:id" element={<ManageProjects />} /> 
           </Route>
         </Route>
-
         {/* PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN) */}
         <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
           <Route path="/admin" element={<AdminLayout />}>
