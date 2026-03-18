@@ -12,10 +12,30 @@ const StudentNotifications: React.FC = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchNotifications = async () => {
+const fetchNotifications = async () => {
         try {
-            const res = await api.get('/notifications/my');
-            setNotifications(res.data);
+            setLoading(true);
+            const [notifRes, postsRes] = await Promise.all([
+                api.get('/notifications/my'),
+                api.get('/posts?type=IMPORTANT_NOTIFICATION') 
+            ]);
+
+            const personalNotifs = notifRes.data;
+            
+            const systemPosts = postsRes.data.map((post: any) => ({
+                id: `post_${post.id}`, 
+                title: 'THÔNG BÁO QUAN TRỌNG TỪ BAN QUẢN TRỊ', 
+                content: post.title, 
+                createdAt: post.createdAt,
+                isRead: false,
+                isSystemPost: true, 
+                originalPostId: post.id 
+            }));
+            const combined = [...personalNotifs, ...systemPosts].sort((a, b) => 
+                dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
+            );
+
+            setNotifications(combined);
         } catch (error) {
             message.error('Không thể tải thông báo');
         } finally {
@@ -23,19 +43,17 @@ const StudentNotifications: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchNotifications(); }, []);
-
-    const handleMarkAsRead = async (id: number, isRead: boolean) => {
-        // Nếu thông báo đã đọc rồi thì không gọi API nữa
-        if (isRead) return;
+    const handleMarkAsRead = async (item: any) => {
+        if (item.isRead) return;
 
         try {
-            await api.patch(`/notifications/${id}/read`);
-            
-            // 1. Cập nhật giao diện tại trang này
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-            
-            // 2. PHÁT TÍN HIỆU: Để Navbar biết đường mà cập nhật lại số lượng
+            if (item.isSystemPost) {
+                setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
+                return;
+            }
+
+            await api.patch(`/notifications/${item.id}/read`);
+            setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
             window.dispatchEvent(new Event('notificationRead'));
             
         } catch (err) {
@@ -68,8 +86,7 @@ const StudentNotifications: React.FC = () => {
                                     marginBottom: '8px',
                                     border: '1px solid #f0f0f0'
                                 }}
-                                onClick={() => handleMarkAsRead(item.id, item.isRead)}
-                            >
+                                    onClick={() => handleMarkAsRead(item)}                            >
                                 <List.Item.Meta
                                     avatar={
                                         <Badge dot={!item.isRead}>

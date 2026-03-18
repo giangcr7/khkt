@@ -16,7 +16,7 @@ export class RecruitmentService {
         skills: dto.skills || [],
         targetAmount: dto.targetAmount, 
         authorId: authorId,
-        status: RecruitmentStatus.OPEN, // Mặc định trạng thái mở
+        status: RecruitmentStatus.OPEN, 
       },
     });
   }
@@ -25,7 +25,7 @@ export class RecruitmentService {
 async findAll(skillFilter?: string[]) {
   return this.prisma.recruitment.findMany({
     where: {
-      status: RecruitmentStatus.OPEN, // Sử dụng Enum từ schema
+      status: RecruitmentStatus.OPEN, 
       ...(skillFilter?.length ? { skills: { hasSome: skillFilter } } : {}),
     },
     include: {
@@ -42,8 +42,6 @@ async findAll(skillFilter?: string[]) {
     });
 
     if (!recruitment) throw new NotFoundException('Không tìm thấy tin tuyển dụng');
-    
-    // Bảo mật: Chỉ người đăng mới có quyền đóng tin của mình
     if (recruitment.authorId !== userId) {
       throw new ForbiddenException('Bạn không có quyền đóng tin này');
     }
@@ -66,9 +64,7 @@ async findOne(id: number) {
   });
 
   if (!recruitment) throw new NotFoundException('Không tìm thấy tin');
-  
-  // Trả về dữ liệu gốc (bao gồm authorId) và author lồng bên trong
-  return recruitment; 
+    return recruitment; 
 }
 
   // 5. Chấp nhận thành viên

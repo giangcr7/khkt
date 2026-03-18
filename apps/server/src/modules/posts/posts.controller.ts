@@ -5,9 +5,9 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role, PostType } from '@prisma/client';
-import { ApiTags } from '@nestjs/swagger'; // 1. Đã import
+import { ApiTags } from '@nestjs/swagger'; 
 
-@ApiTags('Posts (News & Guides)') // 2. BỔ SUNG DÒNG NÀY (Để gom nhóm API trên Swagger)
+@ApiTags('Posts (News & Guides)') 
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) { }
@@ -19,8 +19,6 @@ export class PostsController {
   create(@Request() req, @Body() createPostDto: CreatePostDto) {
     return this.postsService.create(req.user.userId, createPostDto);
   }
-
-  // 2. Xem danh sách (Ai cũng xem được - Không cần Guard)
   @Get()
   findAll(@Query('type') type?: PostType) {
     return this.postsService.findAll(type);
