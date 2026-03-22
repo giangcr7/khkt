@@ -312,8 +312,10 @@ enum MemberRole {
 }
 
 enum ResourceType {
-  TEMPLATE
-  VIDEO
+  REFERENCE   
+  TEMPLATE    
+  GUIDE       
+  VIDEO       
 }
 enum PostType {
   NEWS

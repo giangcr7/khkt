@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, List, Card, Spin, message, Tag, Space, Empty } from 'antd';
-import { BulbOutlined, CalendarOutlined, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Typography, List, Card, Spin, message, Tag, Space, Empty, Button } from 'antd';
+import { BulbOutlined, CalendarOutlined, UserOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../services/api';
@@ -16,16 +16,13 @@ const BlogPage: React.FC = () => {
         const fetchBlogs = async () => {
             setLoading(true);
             try {
-                // Gọi API lấy toàn bộ bài viết
                 const res = await api.get('/posts');
                 const allPosts = Array.isArray(res.data) ? res.data : (res.data.data || []);
                 
-                // CHỈ LỌC ra những bài có type là 'BLOG' và đang được xuất bản (isPublished)
                 const experiencePosts = allPosts.filter((post: any) => 
                     post.type === 'BLOG' && post.isPublished !== false
                 );
                 
-                // ĐÃ FIX LỖI "Parameter 'b' implicitly has an 'any' type"
                 const sortedPosts = experiencePosts.sort((a: any, b: any) => 
                     dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix()
                 );
@@ -41,7 +38,15 @@ const BlogPage: React.FC = () => {
         fetchBlogs();
     }, []);
 
-    // Giao diện khi đang tải dữ liệu
+    // --- HÀM ÉP TẢI CLOUDINARY ---
+    const getDownloadUrl = (url: string) => {
+        if (!url) return '';
+        if (url.includes('cloudinary.com')) {
+            return url.replace('/upload/', '/upload/fl_attachment/');
+        }
+        return url;
+    };
+
     if (loading) {
         return (
             <div style={{ textAlign: 'center', padding: '100px', minHeight: '100vh', background: '#f5f7fa' }}>
@@ -52,7 +57,7 @@ const BlogPage: React.FC = () => {
 
     return (
         <div style={{ background: '#f5f7fa', minHeight: '100vh', paddingBottom: '60px' }}>
-            {/* Header của trang */}
+            {/* Header */}
             <div style={{ background: '#fff', padding: '60px 24px', textAlign: 'center', marginBottom: '40px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                 <Title level={1} style={{ margin: 0, color: '#1890ff' }}>
                     <BulbOutlined /> Góc Kinh Nghiệm
@@ -62,7 +67,7 @@ const BlogPage: React.FC = () => {
                 </Paragraph>
             </div>
 
-            {/* Danh sách bài viết */}
+            {/* Danh sách */}
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
                 <List
                     grid={{ gutter: 32, xs: 1, sm: 2, md: 2, lg: 3 }}
@@ -72,7 +77,6 @@ const BlogPage: React.FC = () => {
                         <List.Item>
                             <Card
                                 hoverable
-                                onClick={() => navigate(`/post/${item.id}`)}
                                 style={{ 
                                     borderRadius: '16px', 
                                     overflow: 'hidden', 
@@ -82,28 +86,60 @@ const BlogPage: React.FC = () => {
                                     display: 'flex',
                                     flexDirection: 'column'
                                 }}
-                                bodyStyle={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}
+                                bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', flex: 1 }}
                                 cover={
                                     item.thumbnail ? (
                                         <img 
                                             alt={item.title} 
                                             src={item.thumbnail} 
-                                            style={{ height: 220, objectFit: 'cover', width: '100%' }} 
+                                            style={{ height: 220, objectFit: 'cover', width: '100%', cursor: 'pointer' }} 
+                                            onClick={() => navigate(`/post/${item.id}`)}
                                         />
                                     ) : (
-                                        <div style={{ 
-                                            height: 220, 
-                                            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center' 
-                                        }}>
+                                        <div 
+                                            style={{ 
+                                                height: 220, 
+                                                background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => navigate(`/post/${item.id}`)}
+                                        >
                                             <BulbOutlined style={{ fontSize: '48px', color: '#8c8c8c' }} />
                                         </div>
                                     )
                                 }
+                                // 👇 DÀN NÚT BẤM DƯỚI ĐÁY CARD (GIỐNG HỆT BÊN TÀI LIỆU) 👇
+                                actions={[
+                                    <Button 
+                                        type="link" 
+                                        icon={<DownloadOutlined />} 
+                                        href={getDownloadUrl(item.externalLink)} 
+                                        download 
+                                        disabled={!item.externalLink} // Làm mờ nút nếu bài viết không có file đính kèm
+                                    >
+                                        Tải về
+                                    </Button>,
+                                    <Button 
+                                        type="text" 
+                                        icon={<EyeOutlined />} 
+                                        onClick={() => {
+                                            // Ưu tiên mở file nếu có, không có thì mở trang chi tiết để đọc chữ
+                                            if (item.externalLink) window.open(item.externalLink, '_blank');
+                                            else navigate(`/post/${item.id}`);
+                                        }}
+                                    >
+                                        Xem
+                                    </Button>
+                                ]}
                             >
-                                <div style={{ flex: 1 }}>
+                                {/* Phần thân Card: Click vào đây để xem chi tiết bài viết */}
+                                <div 
+                                    style={{ padding: '24px', flex: 1, cursor: 'pointer' }}
+                                    onClick={() => navigate(`/post/${item.id}`)}
+                                >
                                     <Tag color="purple" style={{ marginBottom: '12px', padding: '4px 12px', borderRadius: '4px' }}>
                                         Kinh nghiệm
                                     </Tag>
@@ -115,21 +151,15 @@ const BlogPage: React.FC = () => {
                                     <Paragraph type="secondary" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 24 }}>
                                         {item.content || 'Nhấn vào để xem chi tiết bài chia sẻ này...'}
                                     </Paragraph>
-                                </div>
 
-                                {/* Footer của Card */}
-                                <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Space direction="vertical" size={0}>
+                                    <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <Text type="secondary" style={{ fontSize: '12px' }}>
                                             <UserOutlined /> {item.author?.fullName || 'Admin'}
                                         </Text>
                                         <Text type="secondary" style={{ fontSize: '12px' }}>
                                             <CalendarOutlined /> {dayjs(item.createdAt).format('DD/MM/YYYY')}
                                         </Text>
-                                    </Space>
-                                    <Text style={{ color: '#1890ff', fontWeight: 500 }}>
-                                        Đọc tiếp <ArrowRightOutlined />
-                                    </Text>
+                                    </div>
                                 </div>
                             </Card>
                         </List.Item>
