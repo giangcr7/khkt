@@ -31,6 +31,15 @@ const ResourcesPage: React.FC = () => {
         fetchData();
     }, []);
 
+    // --- HÀM ÉP TẢI CLOUDINARY (Xử lý link để ép trình duyệt tải về) ---
+    const getDownloadUrl = (url: string) => {
+        if (!url) return '';
+        if (url.includes('cloudinary.com')) {
+            return url.replace('/upload/', '/upload/fl_attachment/');
+        }
+        return url;
+    };
+
     // --- HÀM TẠO THUMBNAIL THẬT TỪ NỘI DUNG FILE ---
     const renderCardCover = (item: any) => {
         const url = item.fileUrl || '';
@@ -114,7 +123,8 @@ const ResourcesPage: React.FC = () => {
                                             }}
                                             cover={renderCardCover(item)}
                                             actions={[
-                                                <Button type="link" icon={<DownloadOutlined />} href={item.fileUrl} target="_blank">Tải về</Button>,
+                                                // Đã sửa lại link Tải Về ở đây
+                                                <Button type="link" icon={<DownloadOutlined />} href={getDownloadUrl(item.fileUrl)} download>Tải về</Button>,
                                                 <Button type="text" icon={<EyeOutlined />} href={item.fileUrl} target="_blank">Xem</Button>
                                             ]}
                                         >

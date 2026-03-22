@@ -315,10 +315,12 @@ enum ResourceType {
   TEMPLATE
   VIDEO
 }
-
 enum PostType {
   NEWS
   ANNOUNCEMENT
+  BLOG       
+  GUIDE      
+  CONTEST  
 }
 
 enum RecruitmentStatus {

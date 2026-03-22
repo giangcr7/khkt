@@ -20,7 +20,7 @@ import ChatWidget from './components/Shared/ChatWidget';
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
 import MyProjectPage from './pages/Student/MyProject';
-import NotificationsPage from './pages/Student/Notifications'; // Đảm bảo đúng đường dẫn file
+import NotificationsPage from './pages/Student/Notifications'; 
 
 // Lecturer Pages
 import LecturerDashboard from './pages/Lecturer/LecturerDashboard';
@@ -39,13 +39,14 @@ import RecruitmentList from './pages/Student/RecruitmentList';
 import RecruitmentDetailPage from './pages/Student/RecruitmentDetailPage';
 import NewsListPage from './pages/NewsListPage';
 import ResourcesPage from './pages/Student/Resources';
+import BlogPage from './pages/BlogPage';
 
 function App() {
   return (
     <BrowserRouter>
       {/* Navbar luôn hiển thị ở trên cùng */}
       <Navbar />
-<ChatWidget />
+      <ChatWidget />
       <Routes>
         {/* ========================================================== */}
         {/* PUBLIC ROUTES: Bất kỳ ai cũng có thể truy cập */}
@@ -57,6 +58,7 @@ function App() {
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/post/:id" element={<PostDetail />} />
         <Route path="/news" element={<NewsListPage />} />
+        <Route path="/kinh-nghiem" element={<BlogPage />} /> {/* Đã thêm Route Kinh nghiệm */}
         {/* ========================================================== */}
         {/* PROTECTED ROUTES: Phải đăng nhập & đúng quyền hạn */}
         {/* ========================================================== */}

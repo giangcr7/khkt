@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Space, Card, Typography, Popconfirm, message, Image, Upload, Row, Col, Tag } from 'antd';
+import { Table, Button, Modal, Form, Input, Space, Card, Typography, Popconfirm, message, Image, Upload, Row, Col, Tag, Select } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined,
     PictureOutlined, UploadOutlined
@@ -24,7 +24,9 @@ const ManageNews: React.FC = () => {
         setLoading(true);
         try {
             const res = await api.get('/posts');
-            setPosts(res.data);
+            // Cập nhật để bài mới nhất hiển thị lên đầu bảng
+            const sortedPosts = res.data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setPosts(sortedPosts);
         } catch (error) {
             message.error('Lỗi tải danh sách bài viết');
         } finally {
@@ -45,6 +47,7 @@ const ManageNews: React.FC = () => {
         if (record) {
             form.setFieldsValue({
                 title: record.title,
+                type: record.type, // <-- Nạp loại bài viết cũ vào form
                 externalLink: record.externalLink,
                 content: record.content
             });
@@ -57,6 +60,7 @@ const ManageNews: React.FC = () => {
             }
         } else {
             form.resetFields();
+            form.setFieldsValue({ type: 'NEWS' }); // Mặc định khi tạo mới là Tin tức
         }
 
         setIsModalOpen(true);
@@ -64,7 +68,7 @@ const ManageNews: React.FC = () => {
 
     const onFinish = async (values: any) => {
         setLoading(true);
-        const hide = message.loading('Đang xử lý tải tệp lên...', 0);
+        const hide = message.loading('Đang xử lý dữ liệu...', 0);
 
         try {
             let finalThumbUrl = currentRecord?.thumbnail || "";
@@ -84,11 +88,11 @@ const ManageNews: React.FC = () => {
                 finalFileUrl = ""; 
             }
 
-            // Đóng gói JSON thuần túy gửi xuống Backend
+            // Đóng gói JSON gửi xuống Backend
             const payload = {
                 title: values.title,
                 content: values.content,
-                type: 'NEWS', // <-- GẮN CỨNG MẶC ĐỊNH LÀ NEWS ĐỂ BACKEND KHÔNG BÁO LỖI
+                type: values.type, // <-- Lấy giá trị ĐỘNG từ thẻ Select sếp đã chọn
                 thumbnail: String(finalThumbUrl),
                 externalLink: String(finalFileUrl)
             };
@@ -143,7 +147,13 @@ const ManageNews: React.FC = () => {
                         )}
                     </div>
                     <Space direction="vertical" size={0}>
-                        <Text strong style={{ fontSize: 14 }}>{record.title}</Text>
+                        <Text strong style={{ fontSize: 14 }}>
+                            {/* THÊM TAG PHÂN BIỆT MÀ KHÔNG LÀM TỐN CỘT BẢNG */}
+                            {record.type === 'BLOG' ? <Tag color="purple">Kinh nghiệm</Tag> : 
+                             record.type === 'NEWS' ? <Tag color="blue">Tin tức</Tag> : 
+                             <Tag color="green">{record.type}</Tag>}
+                            {record.title}
+                        </Text>
                         <Paragraph type="secondary" ellipsis style={{ marginBottom: 0, maxWidth: 300 }}>
                             {record.content}
                         </Paragraph>
@@ -156,7 +166,6 @@ const ManageNews: React.FC = () => {
                 </Space>
             )
         },
-        // ĐÃ XÓA CỘT PHÂN LOẠI Ở ĐÂY CHO GỌN BẢNG
         {
             title: 'Thao tác',
             align: 'right' as const,
@@ -177,8 +186,8 @@ const ManageNews: React.FC = () => {
             <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                     <div>
-                        <Title level={2} style={{ margin: 0 }}>Quản trị Tin tức</Title>
-                        <Text type="secondary">Cập nhật tin tức từ nhà trường</Text>
+                        <Title level={2} style={{ margin: 0 }}>Quản trị Tin tức & Bài viết</Title>
+                        <Text type="secondary">Cập nhật tin tức và kinh nghiệm từ nhà trường</Text>
                     </div>
                     <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => openModal()} style={{ borderRadius: 8 }}>
                         Bài viết mới
@@ -218,6 +227,15 @@ const ManageNews: React.FC = () => {
                         </Col>
 
                         <Col span={9}>
+                            {/* THÊM TRƯỜNG CHỌN LOẠI BÀI VIẾT (NEWS / BLOG) VÀO ĐÂY */}
+                            <Form.Item name="type" label="Phân loại bài viết" rules={[{ required: true, message: 'Vui lòng chọn loại bài viết!' }]}>
+                                <Select size="large" style={{ borderRadius: 8 }}>
+                                    <Select.Option value="NEWS">📰 Tin tức chung</Select.Option>
+                                    <Select.Option value="BLOG">💡 Chia sẻ Kinh nghiệm</Select.Option>
+                                    <Select.Option value="ANNOUNCEMENT">🔔 Thông báo</Select.Option>
+                                </Select>
+                            </Form.Item>
+
                             <Form.Item label="Ảnh đại diện (Thumbnail)">
                                 <Upload.Dragger
                                     listType="picture"

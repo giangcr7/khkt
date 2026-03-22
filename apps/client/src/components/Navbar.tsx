@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Layout, Menu, Button, Space, Typography, Dropdown, Tag, Avatar, Badge, message } from 'antd';
 import {
     HomeOutlined, DashboardOutlined, UserOutlined, LogoutOutlined,
-    RocketOutlined, CalendarOutlined, ReadOutlined, FileSearchOutlined,
-    ProjectOutlined, TeamOutlined, QuestionCircleOutlined, InfoCircleOutlined,
-    BellOutlined // Import thêm icon chuông
+    RocketOutlined, CalendarOutlined, ReadOutlined, ProjectOutlined, 
+    TeamOutlined, QuestionCircleOutlined, BellOutlined,
+    BulbOutlined // <-- Thêm icon bóng đèn cho mục Kinh nghiệm
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
+
 const { Header } = Layout;
 const { Title, Text } = Typography;
 
@@ -17,15 +18,13 @@ const Navbar: React.FC = () => {
 
     const [role, setRole] = useState<string | null>(localStorage.getItem('role'));
     const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || '{}'));
-    const [unreadCount, setUnreadCount] = useState(0); // State quản lý số thông báo chưa đọc
+    const [unreadCount, setUnreadCount] = useState(0);
 
-    // Hàm lấy số lượng thông báo chưa đọc
     const fetchUnreadNotis = async () => {
         if (!localStorage.getItem('token')) return;
         try {
-            // Gọi API lấy thông báo của tôi
             const res = await api.get('/notifications/my');
-            const unread = res.data.filter((n: any) => !n.isRead).length; // Lọc các thông báo có isRead = false
+            const unread = res.data.filter((n: any) => !n.isRead).length;
             setUnreadCount(unread);
         } catch (error) {
             console.error("Lỗi tải thông báo Navbar");
@@ -37,10 +36,15 @@ const Navbar: React.FC = () => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) setUser(JSON.parse(storedUser));
         
-        // Chỉ lấy thông báo nếu người dùng đã đăng nhập
         if (localStorage.getItem('token')) {
             fetchUnreadNotis();
         }
+
+        // 👇 LẮNG NGHE SỰ KIỆN: Tự động trừ số thông báo khi bên trang Thông báo bấm "Đã đọc"
+        window.addEventListener('notificationRead', fetchUnreadNotis);
+        return () => {
+            window.removeEventListener('notificationRead', fetchUnreadNotis);
+        };
     }, [location]);
 
     const handleLogout = () => {
@@ -57,6 +61,8 @@ const Navbar: React.FC = () => {
             { key: '/', label: 'Trang chủ', icon: <HomeOutlined />, onClick: () => navigate('/') },
             { key: '/timeline', label: 'Lộ trình', icon: <CalendarOutlined />, onClick: () => navigate('/timeline') },
             { key: '/resources', label: 'Tài liệu', icon: <ReadOutlined />, onClick: () => navigate('/resources') },
+            // 👇 THÊM MENU KINH NGHIỆM Ở ĐÂY 👇
+            { key: '/kinh-nghiem', label: 'Kinh nghiệm', icon: <BulbOutlined />, onClick: () => navigate('/kinh-nghiem') },
             { key: '/faq', label: 'Hỏi đáp', icon: <QuestionCircleOutlined />, onClick: () => navigate('/faq') },
         ];
 
