@@ -116,7 +116,6 @@ const ResourcesPage: React.FC = () => {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
             <div style={{ marginBottom: 32, borderBottom: '2px solid #f0f0f0', paddingBottom: '16px' }}>
                 <Title level={2}><FileTextOutlined /> Kho Tài liệu</Title>
-                <Text type="danger" strong style={{ fontSize: '18px' }}>Tài liệu tham khảo - Mẫu biểu - Quy định</Text>
             </div>
 
             <Tabs 

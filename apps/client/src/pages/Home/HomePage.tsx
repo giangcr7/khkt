@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Layout, Spin, message } from 'antd';
 import api from '../../services/api';
 
-// Đảm bảo bạn đã import HomeTimeline ở đây
 import HomeHero from '../../components/Home/HomeHero';
 import HomeStats from '../../components/Home/HomeStats';
-import HomeTimeline from '../../components/Home/HomeTimeline'; // <-- IMPORT MỚI
+import HomeTimeline from '../../components/Home/HomeTimeline'; 
 import HomeFAQ from '../../components/Home/HomeFAQ';
 import Footer from '../../components/Shared/Footer';
 import HomeResources from '../../components/Home/HomeResources';
@@ -14,6 +13,9 @@ import HomeNews from '../../components/Home/HomeNew';
 const { Content } = Layout;
 
 const HomePage: React.FC = () => {
+    // 👇 KIỂM TRA NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP CHƯA
+    const isLoggedIn = !!localStorage.getItem('token');
+
     const [data, setData] = useState<any>({
         stats: null,
         events: [],   
@@ -28,7 +30,7 @@ const HomePage: React.FC = () => {
             try {
                 const [resStats, resEvents, resFaqs, resPosts, resResources] = await Promise.all([
                     api.get('/projects/stats'),
-                    api.get('/events'), // Lấy sự kiện cho Timeline
+                    api.get('/events'),
                     api.get('/faqs'),
                     api.get('/posts'),
                     api.get('/resources') 
@@ -65,14 +67,15 @@ const HomePage: React.FC = () => {
                 <HomeStats stats={data.stats} />
 
                 {/* Khu vực 3: LỘ TRÌNH SỰ KIỆN (TIMELINE) */}
-                {/* Đặt ở đây để sinh viên thấy ngay các mốc thời gian quan trọng */}
                 <HomeTimeline events={data.events} /> 
 
                 {/* Khu vực 4: Tin tức & Thông báo mới nhất */}
                 <HomeNews posts={data.posts} />
 
-                {/* Khu vực 5: Kho tài liệu biểu mẫu */}
-                <HomeResources resources={data.resources} /> 
+                {/* 👇 KHU VỰC 5: CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP 👇 */}
+                {isLoggedIn && (
+                    <HomeResources resources={data.resources} /> 
+                )}
 
                 {/* Khu vực 6: Hỏi đáp thường gặp */}
                 <HomeFAQ faqs={data.faqs} />
