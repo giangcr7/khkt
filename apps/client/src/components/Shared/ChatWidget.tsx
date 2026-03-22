@@ -1,171 +1,129 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, Input, Button, Avatar, Typography } from 'antd';
+import { Button, Input, List, Avatar, Card, Space, Typography, Tag } from 'antd';
 import { 
-    MessageOutlined, 
-    CloseOutlined, 
-    SendOutlined, 
-    RobotOutlined, 
-    UserOutlined 
+    MessageOutlined, CloseOutlined, SendOutlined, 
+    RobotOutlined, UserOutlined, BulbOutlined 
 } from '@ant-design/icons';
-import api from '../../services/api'; 
+import api from '../../services/api';
 
 const { Text } = Typography;
 
-interface Message {
-    text: string;
-    isBot: boolean;
-}
+// 👇 BỘ CÂU HỎI GỢI Ý (QUICK REPLIES)
+const QUICK_QUESTIONS = [
+    "NCKH là gì và tại sao nên tham gia?",
+    "Cách tìm ý tưởng đề tài phù hợp?",
+    "Quyền lợi & điểm rèn luyện khi NCKH?",
+    "Quy định số thành viên & cách đăng ký nhóm?"
+];
 
 const ChatWidget: React.FC = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([
-        { text: "Chào bạn! Mình là Trợ lý AI hỗ trợ Nghiên cứu Khoa học. Mình có thể giúp gì cho bạn?", isBot: true }
-    ]);
-    const [inputValue, setInputValue] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState(false);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [inputValue, setInputValue] = useState("");
+    const [loading, setLoading] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
+    // Tự động cuộn xuống cuối khi có tin nhắn mới
     useEffect(() => {
-        scrollToBottom();
-    }, [messages, isOpen]);
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages]);
 
-    const handleSend = async () => {
-        if (!inputValue.trim()) return;
+    const handleSendMessage = async (content?: string) => {
+        const textToSend = content || inputValue;
+        if (!textToSend.trim()) return;
 
-        const userText = inputValue.trim();
-        setInputValue('');
-        
-        // 1. Thêm tin nhắn của User vào khung chat
-        setMessages(prev => [...prev, { text: userText, isBot: false }]);
-        setIsLoading(true);
+        const userMsg = { role: 'user', content: textToSend };
+        setMessages(prev => [...prev, userMsg]);
+        setInputValue("");
+        setLoading(true);
 
         try {
-            // 2. GỌI API CỦA NESTJS (Backend chính)
-            const res = await api.post('/chatbot/ask', { 
-                message: userText 
-            });
-
-            // 3. Nhận kết quả và hiển thị
-            if (res.data && res.data.reply) {
-                setMessages(prev => [...prev, { text: res.data.reply, isBot: true }]);
-            } else {
-                setMessages(prev => [...prev, { text: "Hệ thống AI hiện không phản hồi. Vui lòng thử lại!", isBot: true }]);
-            }
+            const res = await api.post('/chat/ai', { prompt: textToSend });
+            const botMsg = { role: 'assistant', content: res.data.answer };
+            setMessages(prev => [...prev, botMsg]);
         } catch (error) {
-            console.error("Lỗi gọi AI:", error);
-            setMessages(prev => [...prev, { text: "Không thể kết nối đến máy chủ. Hãy đảm bảo Server đang chạy nhé!", isBot: true }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Hệ thống đang bận, sếp thử lại sau nhé!" }]);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div style={{ position: 'fixed', bottom: 30, right: 30, zIndex: 9999 }}>
-            {/* Nút bấm tròn để mở Chatbox */}
-            {!isOpen && (
+        <div style={{ position: 'fixed', bottom: 30, right: 30, zIndex: 1000 }}>
+            {/* NÚT BẤM MỞ CHAT */}
+            {!visible && (
                 <Button 
-                    type="primary" 
-                    shape="circle" 
-                    size="large" 
-                    icon={<MessageOutlined style={{ fontSize: 24 }} />} 
-                    style={{ width: 60, height: 60, boxShadow: '0 4px 12px rgba(24,144,255,0.4)' }}
-                    onClick={() => setIsOpen(true)}
+                    type="primary" shape="circle" size="large" 
+                    icon={<MessageOutlined />} 
+                    onClick={() => setVisible(true)}
+                    style={{ width: 60, height: 60, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
                 />
             )}
 
-            {/* Cửa sổ Chatbox */}
-            {isOpen && (
-                <Card 
-                    style={{ 
-                        width: 350, 
-                        height: 500, 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                        borderRadius: 16,
-                        overflow: 'hidden'
-                    }}
-                    bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}
+            {/* KHUNG CHAT WINDOW */}
+            {visible && (
+                <Card
+                    title={
+                        <Space><RobotOutlined /> <Text strong style={{ color: '#fff' }}>Trợ lý AI - NCKH</Text></Space>
+                    }
+                    extra={<CloseOutlined onClick={() => setVisible(false)} style={{ color: '#fff' }} />}
+                    style={{ width: 380, borderRadius: '15px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+                    headStyle={{ background: '#1890ff', color: '#fff' }}
+                    bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', height: 450 }}
                 >
-                    {/* Header */}
-                    <div style={{ background: '#1890ff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Avatar icon={<RobotOutlined />} style={{ background: '#fff', color: '#1890ff' }} />
-                            <Text strong style={{ color: '#fff', fontSize: 16 }}>Trợ lý AI - NCKH</Text>
-                        </div>
-                        <Button type="text" icon={<CloseOutlined style={{ color: '#fff' }} />} onClick={() => setIsOpen(false)} />
-                    </div>
-
-                    {/* Nội dung Chat */}
-                    <div style={{ flex: 1, padding: 16, overflowY: 'auto', background: '#f5f7fa' }}>
-                        {messages.map((msg, index) => (
-                            <div key={index} style={{ 
-                                display: 'flex', 
-                                justifyContent: msg.isBot ? 'flex-start' : 'flex-end', 
-                                marginBottom: 16 
-                            }}>
+                    {/* 1. NỘI DUNG CHAT */}
+                    <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#f9f9f9' }}>
+                        {messages.length === 0 && (
+                            <div style={{ textAlign: 'center', marginTop: 20 }}>
+                                <Avatar size={64} icon={<RobotOutlined />} style={{ backgroundColor: '#1890ff' }} />
+                                <div style={{ marginTop: 10 }}>Chào bạn! Mình có thể giúp gì cho bạn về NCKH?</div>
+                            </div>
+                        )}
+                        {messages.map((m, i) => (
+                            <div key={i} style={{ marginBottom: 12, textAlign: m.role === 'user' ? 'right' : 'left' }}>
                                 <div style={{ 
-                                    display: 'flex', 
-                                    flexDirection: msg.isBot ? 'row' : 'row-reverse',
-                                    alignItems: 'flex-start',
-                                    gap: 12
+                                    display: 'inline-block', padding: '10px 14px', borderRadius: '15px',
+                                    maxWidth: '85%', background: m.role === 'user' ? '#1890ff' : '#fff',
+                                    color: m.role === 'user' ? '#fff' : '#333',
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
                                 }}>
-                                    <Avatar 
-                                        icon={msg.isBot ? <RobotOutlined /> : <UserOutlined />} 
-                                        style={{ background: msg.isBot ? '#1890ff' : '#52c41a' }} 
-                                    />
-                                    <div style={{ 
-                                        maxWidth: 220, 
-                                        padding: '10px 14px', 
-                                        borderRadius: 12,
-                                        background: msg.isBot ? '#fff' : '#1890ff',
-                                        color: msg.isBot ? '#333' : '#fff',
-                                        boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                                        borderTopLeftRadius: msg.isBot ? 0 : 12,
-                                        borderTopRightRadius: msg.isBot ? 12 : 0,
-                                        whiteSpace: 'pre-wrap',
-                                        wordBreak: 'break-word'
-                                    }}>
-                                        {msg.text}
-                                    </div>
+                                    {m.content}
                                 </div>
                             </div>
                         ))}
-                        
-                        {isLoading && (
-                            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 16 }}>
-                                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                                    <Avatar icon={<RobotOutlined />} style={{ background: '#1890ff' }} />
-                                    <div style={{ background: '#fff', padding: '10px 14px', borderRadius: 12, borderTopLeftRadius: 0 }}>
-                                        <Text type="secondary">AI đang suy nghĩ...</Text>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
+                        {loading && <div style={{ fontSize: '12px', color: '#888' }}>AI đang suy nghĩ...</div>}
                     </div>
 
-                    {/* Khu vực nhập liệu */}
-                    <div style={{ padding: '12px', background: '#fff', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 8 }}>
-                        <Input 
-                            placeholder="Nhập câu hỏi của bạn..." 
+                    {/* 2. CÁC CÂU HỎI GỢI Ý (CHỈ HIỆN KHI MỚI VÀO) */}
+                    {messages.length === 0 && (
+                        <div style={{ padding: '10px', background: '#f9f9f9' }}>
+                            <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginBottom: 8 }}>CÂU HỎI GỢI Ý:</Text>
+                            <Space wrap size={[4, 8]}>
+                                {QUICK_QUESTIONS.map((q, i) => (
+                                    <Tag 
+                                        key={i} color="blue" 
+                                        style={{ cursor: 'pointer', borderRadius: '10px', padding: '2px 10px' }}
+                                        onClick={() => handleSendMessage(q)}
+                                    >
+                                        {q}
+                                    </Tag>
+                                ))}
+                            </Space>
+                        </div>
+                    )}
+
+                    {/* 3. Ô NHẬP TIN NHẮN */}
+                    <div style={{ padding: '12px', background: '#fff', borderTop: '1px solid #eee' }}>
+                        <Input
+                            placeholder="Nhập câu hỏi của bạn..."
+                            suffix={<SendOutlined onClick={() => handleSendMessage()} style={{ color: '#1890ff', cursor: 'pointer' }} />}
                             value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onPressEnter={handleSend}
-                            disabled={isLoading}
-                            style={{ borderRadius: 20 }}
-                        />
-                        <Button 
-                            type="primary" 
-                            shape="circle" 
-                            icon={<SendOutlined />} 
-                            onClick={handleSend}
-                            loading={isLoading}
+                            onChange={e => setInputValue(e.target.value)}
+                            onPressEnter={() => handleSendMessage()}
+                            disabled={loading}
+                            bordered={false}
                         />
                     </div>
                 </Card>
