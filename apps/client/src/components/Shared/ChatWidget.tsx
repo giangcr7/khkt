@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, List, Avatar, Card, Space, Typography, Tag } from 'antd';
+import { Button, Input, Avatar, Card, Space, Typography, Tag } from 'antd';
 import { 
     MessageOutlined, CloseOutlined, SendOutlined, 
-    RobotOutlined, UserOutlined, BulbOutlined 
+    RobotOutlined
 } from '@ant-design/icons';
-import api from '../../services/api';
+// Import axios thuần để gọi API AI độc lập
+import axios from 'axios';
 
 const { Text } = Typography;
 
@@ -40,11 +41,21 @@ const ChatWidget: React.FC = () => {
         setLoading(true);
 
         try {
-            const res = await api.post('/chat/ai', { prompt: textToSend });
-            const botMsg = { role: 'assistant', content: res.data.answer };
+            // 👇 GỌI THẲNG API ĐẾN SERVER AI CỦA SẾP
+            // Chú ý: Sếp kiểm tra lại endpoint ở đuôi. Thường server AI người ta hay đặt là /chat hoặc /api/chat. 
+            // Nếu sếp set endpoint khác thì đổi chữ '/chat' bên dưới thành endpoint của sếp nhé.
+            const res = await axios.post('https://khkt-ai-server.onrender.com/chat', { 
+                prompt: textToSend 
+            });
+            
+            // Giả sử API trả về dạng { answer: "Câu trả lời..." } hoặc { response: "..." }
+            const botMsg = { 
+                role: 'assistant', 
+                content: res.data.answer || res.data.response || res.data 
+            };
             setMessages(prev => [...prev, botMsg]);
         } catch (error) {
-            setMessages(prev => [...prev, { role: 'assistant', content: "Hệ thống đang bận, sếp thử lại sau nhé!" }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Server AI đang ngủ gật, sếp đợi 1 phút cho nó tỉnh dậy rồi hỏi lại nhé!" }]);
         } finally {
             setLoading(false);
         }
@@ -93,7 +104,7 @@ const ChatWidget: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-                        {loading && <div style={{ fontSize: '12px', color: '#888' }}>AI đang suy nghĩ...</div>}
+                        {loading && <div style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>AI đang lục tìm trí nhớ...</div>}
                     </div>
 
                     {/* 2. CÁC CÂU HỎI GỢI Ý (CHỈ HIỆN KHI MỚI VÀO) */}

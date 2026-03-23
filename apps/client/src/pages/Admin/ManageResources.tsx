@@ -183,10 +183,10 @@ const ManageResources: React.FC = () => {
 
                     <Form.Item name="type" label="Phân loại tài liệu" rules={[{ required: true, message: 'Chọn loại tài liệu!' }]}>
                         <Select placeholder="-- Chọn phân loại --">
-                            <Select.Option value="REFERENCE">📚 Tài liệu tham khảo</Select.Option>
-                            <Select.Option value="TEMPLATE">📝 Mẫu biểu chuẩn</Select.Option>
-                            <Select.Option value="GUIDE">⚖️ Quy định - Hướng dẫn</Select.Option>
-                            <Select.Option value="VIDEO">🎬 Video bài giảng/quy trình</Select.Option>
+                            <Select.Option value="REFERENCE">Tài liệu tham khảo</Select.Option>
+                            <Select.Option value="TEMPLATE">Mẫu biểu chuẩn</Select.Option>
+                            <Select.Option value="GUIDE">Quy định</Select.Option>
+                            <Select.Option value="VIDEO">Video bài giảng/quy trình</Select.Option>
                         </Select>
                     </Form.Item>
 
