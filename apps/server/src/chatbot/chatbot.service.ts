@@ -12,14 +12,26 @@ export class ChatbotService {
       const aiServerUrl = process.env.AI_SERVER_URL || 'http://127.0.0.1:5000';
       
       const response = await firstValueFrom(
-        this.httpService.post(`${aiServerUrl}/api/chat`, {
-          message: message,
-        }),
+        this.httpService.post(
+          `${aiServerUrl}/api/chat`, 
+          {
+            message: message,
+          },
+          {
+            // 👇 THÊM CÁI NÀY ĐỂ HUGGING FACE KHÔNG CHẶN REQUEST
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' 
+            }
+          }
+        ),
       );
       
       return response.data.reply;
     } catch (error) {
-        console.error('Lỗi khi gọi AI Server:', error.message);
+        // 👇 IN CHI TIẾT LỖI RA LOG ĐỂ BẮT ĐÚNG BỆNH
+        console.error('🔥 LỖI KHI GỌI AI SERVER:', error.response?.data || error.message || error);
+        
         throw new HttpException(
           'Hệ thống AI đang bận hoặc chưa cấu hình link Server.',
           HttpStatus.SERVICE_UNAVAILABLE,

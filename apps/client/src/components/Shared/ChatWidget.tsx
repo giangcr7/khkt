@@ -4,8 +4,7 @@ import {
     MessageOutlined, CloseOutlined, SendOutlined, 
     RobotOutlined
 } from '@ant-design/icons';
-// Import axios thuần để gọi API AI độc lập
-import axios from 'axios';
+import axios from 'axios'; // Dùng axios để gọi thẳng sang Hugging Face
 
 const { Text } = Typography;
 
@@ -41,21 +40,22 @@ const ChatWidget: React.FC = () => {
         setLoading(true);
 
         try {
-            // 👇 GỌI THẲNG API ĐẾN SERVER AI CỦA SẾP
-            // Chú ý: Sếp kiểm tra lại endpoint ở đuôi. Thường server AI người ta hay đặt là /chat hoặc /api/chat. 
-            // Nếu sếp set endpoint khác thì đổi chữ '/chat' bên dưới thành endpoint của sếp nhé.
-            const res = await axios.post('https://khkt-ai-server.onrender.com/chat', { 
-                prompt: textToSend 
+            // 👇 GỌI TRỰC TIẾP SANG HUGGING FACE BẰNG AXIOS
+            // Dùng đúng định dạng link API .hf.space của Hugging Face
+            const res = await axios.post('https://giangcoder-khkt-ai-server.hf.space/api/chat', { 
+                message: textToSend 
             });
             
-            // Giả sử API trả về dạng { answer: "Câu trả lời..." } hoặc { response: "..." }
+            // Lấy kết quả trả về
             const botMsg = { 
                 role: 'assistant', 
-                content: res.data.answer || res.data.response || res.data 
+                content: res.data.reply 
             };
+            
             setMessages(prev => [...prev, botMsg]);
         } catch (error) {
-            setMessages(prev => [...prev, { role: 'assistant', content: "Server AI đang ngủ gật, sếp đợi 1 phút cho nó tỉnh dậy rồi hỏi lại nhé!" }]);
+            console.error("Lỗi kết nối AI:", error);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Server AI Hugging Face đang bận hoặc đang ngủ đông, sếp thử lại sau ít phút nhé!" }]);
         } finally {
             setLoading(false);
         }
