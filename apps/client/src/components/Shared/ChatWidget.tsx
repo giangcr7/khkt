@@ -4,13 +4,12 @@ import {
     MessageOutlined, CloseOutlined, SendOutlined, 
     RobotOutlined
 } from '@ant-design/icons';
-import axios from 'axios'; // Dùng axios để gọi thẳng sang Hugging Face
+import api from '../../services/api'; // Trở lại dùng api NestJS thần thánh
 
 const { Text } = Typography;
 
-// 👇 BỘ CÂU HỎI GỢI Ý (QUICK REPLIES)
-const QUICK_QUESTIONS = [
-    "NCKH là gì và tại sao nên tham gia?",
+// 👇 BỘ CÂU HỎI GỢI Ý GỐC
+const INITIAL_QUESTIONS = [
     "Cách tìm ý tưởng đề tài phù hợp?",
     "Quyền lợi & điểm rèn luyện khi NCKH?",
     "Quy định số thành viên & cách đăng ký nhóm?"
@@ -21,6 +20,10 @@ const ChatWidget: React.FC = () => {
     const [messages, setMessages] = useState<any[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [loading, setLoading] = useState(false);
+    
+    // 👇 State lưu các câu hỏi gợi ý CÒN LẠI chưa bị bấm
+    const [availableQuestions, setAvailableQuestions] = useState<string[]>(INITIAL_QUESTIONS);
+    
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Tự động cuộn xuống cuối khi có tin nhắn mới
@@ -34,19 +37,22 @@ const ChatWidget: React.FC = () => {
         const textToSend = content || inputValue;
         if (!textToSend.trim()) return;
 
+        // Nếu câu hỏi được gửi nằm trong danh sách gợi ý -> Xóa câu đó đi cho gọn
+        if (availableQuestions.includes(textToSend)) {
+            setAvailableQuestions(prev => prev.filter(q => q !== textToSend));
+        }
+
         const userMsg = { role: 'user', content: textToSend };
         setMessages(prev => [...prev, userMsg]);
         setInputValue("");
         setLoading(true);
 
         try {
-            // 👇 GỌI TRỰC TIẾP SANG HUGGING FACE BẰNG AXIOS
-            // Dùng đúng định dạng link API .hf.space của Hugging Face
-            const res = await axios.post('https://giangcoder-khkt-ai-server.hf.space/api/chat', { 
+            // GỌI VỀ NESTJS
+            const res = await api.post('/chatbot/ask', { 
                 message: textToSend 
             });
             
-            // Lấy kết quả trả về
             const botMsg = { 
                 role: 'assistant', 
                 content: res.data.reply 
@@ -55,7 +61,7 @@ const ChatWidget: React.FC = () => {
             setMessages(prev => [...prev, botMsg]);
         } catch (error) {
             console.error("Lỗi kết nối AI:", error);
-            setMessages(prev => [...prev, { role: 'assistant', content: "Server AI Hugging Face đang bận hoặc đang ngủ đông, sếp thử lại sau ít phút nhé!" }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Server AI đang bận rộn xíu, sếp đợi xíu rồi hỏi lại nhé!" }]);
         } finally {
             setLoading(false);
         }
@@ -80,12 +86,12 @@ const ChatWidget: React.FC = () => {
                         <Space><RobotOutlined /> <Text strong style={{ color: '#fff' }}>Trợ lý AI - NCKH</Text></Space>
                     }
                     extra={<CloseOutlined onClick={() => setVisible(false)} style={{ color: '#fff' }} />}
-                    style={{ width: 380, borderRadius: '15px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+                    style={{ width: 380, borderRadius: '15px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', maxHeight: 550 }}
                     headStyle={{ background: '#1890ff', color: '#fff' }}
-                    bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', height: 450 }}
+                    bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
                 >
                     {/* 1. NỘI DUNG CHAT */}
-                    <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#f9f9f9' }}>
+                    <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#f9f9f9', minHeight: 250 }}>
                         {messages.length === 0 && (
                             <div style={{ textAlign: 'center', marginTop: 20 }}>
                                 <Avatar size={64} icon={<RobotOutlined />} style={{ backgroundColor: '#1890ff' }} />
@@ -107,26 +113,26 @@ const ChatWidget: React.FC = () => {
                         {loading && <div style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>AI đang lục tìm trí nhớ...</div>}
                     </div>
 
-                    {/* 2. CÁC CÂU HỎI GỢI Ý (CHỈ HIỆN KHI MỚI VÀO) */}
-                    {messages.length === 0 && (
-                        <div style={{ padding: '10px', background: '#f9f9f9' }}>
-                            <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginBottom: 8 }}>CÂU HỎI GỢI Ý:</Text>
-                            <Space wrap size={[4, 8]}>
-                                {QUICK_QUESTIONS.map((q, i) => (
+                    {/* 2. CÁC CÂU HỎI GỢI Ý (Bây giờ nó sẽ LUÔN HIỂN THỊ cho đến khi bấm hết) */}
+                    {availableQuestions.length > 0 && (
+                        <div style={{ padding: '10px 16px', background: '#f0f5ff', borderTop: '1px solid #e6f7ff' }}>
+                            <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginBottom: 8 }}>GỢI Ý NHANH:</Text>
+                            <div style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '4px', gap: '8px' }}>
+                                {availableQuestions.map((q, i) => (
                                     <Tag 
                                         key={i} color="blue" 
-                                        style={{ cursor: 'pointer', borderRadius: '10px', padding: '2px 10px' }}
+                                        style={{ cursor: 'pointer', borderRadius: '12px', padding: '4px 12px', whiteSpace: 'nowrap' }}
                                         onClick={() => handleSendMessage(q)}
                                     >
                                         {q}
                                     </Tag>
                                 ))}
-                            </Space>
+                            </div>
                         </div>
                     )}
 
                     {/* 3. Ô NHẬP TIN NHẮN */}
-                    <div style={{ padding: '12px', background: '#fff', borderTop: '1px solid #eee' }}>
+                    <div style={{ padding: '12px 16px', background: '#fff', borderTop: '1px solid #eee' }}>
                         <Input
                             placeholder="Nhập câu hỏi của bạn..."
                             suffix={<SendOutlined onClick={() => handleSendMessage()} style={{ color: '#1890ff', cursor: 'pointer' }} />}
@@ -135,6 +141,7 @@ const ChatWidget: React.FC = () => {
                             onPressEnter={() => handleSendMessage()}
                             disabled={loading}
                             bordered={false}
+                            style={{ padding: 0 }}
                         />
                     </div>
                 </Card>
