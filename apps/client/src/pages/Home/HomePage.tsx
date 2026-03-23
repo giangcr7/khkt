@@ -13,7 +13,7 @@ import HomeNews from '../../components/Home/HomeNew';
 const { Content } = Layout;
 
 const HomePage: React.FC = () => {
-    // 👇 KIỂM TRA NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP CHƯA
+    // Biến kiểm tra đăng nhập
     const isLoggedIn = !!localStorage.getItem('token');
 
     const [data, setData] = useState<any>({
@@ -60,24 +60,11 @@ const HomePage: React.FC = () => {
     return (
         <Layout style={{ background: '#fff' }}>
             <Content>
-                {/* Khu vực 1: Banner & Tìm kiếm */}
                 <HomeHero />
-
-                {/* Khu vực 2: Thống kê số liệu nổi bật */}
                 <HomeStats stats={data.stats} />
-
-                {/* Khu vực 3: LỘ TRÌNH SỰ KIỆN (TIMELINE) */}
                 <HomeTimeline events={data.events} /> 
-
-                {/* Khu vực 4: Tin tức & Thông báo mới nhất */}
                 <HomeNews posts={data.posts} />
-
-                {/* 👇 KHU VỰC 5: CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP 👇 */}
-                {isLoggedIn && (
-                    <HomeResources resources={data.resources} /> 
-                )}
-
-                {/* Khu vực 6: Hỏi đáp thường gặp */}
+                <HomeResources resources={data.resources} isLoggedIn={isLoggedIn} /> 
                 <HomeFAQ faqs={data.faqs} />
             </Content>
             <Footer />
