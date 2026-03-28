@@ -12,7 +12,6 @@ const { Text } = Typography;
 const INITIAL_QUESTIONS = [
     "Cách tìm ý tưởng đề tài phù hợp?",
     "Quyền lợi & điểm rèn luyện khi NCKH?",
-    "Quy định số thành viên & cách đăng ký nhóm?"
 ];
 
 const ChatWidget: React.FC = () => {

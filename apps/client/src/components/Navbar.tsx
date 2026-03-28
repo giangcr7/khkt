@@ -88,7 +88,7 @@ const Navbar: React.FC = () => {
         }}>
             <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }} onClick={() => navigate('/')}>
                 <RocketOutlined style={{ color: '#1890ff', fontSize: '24px', marginRight: '8px' }} />
-                <Title level={4} style={{ color: '#fff', margin: 0, whiteSpace: 'nowrap' }}>NCKH TLU</Title>
+                <Title level={4} style={{ color: '#fff', margin: 0, whiteSpace: 'nowrap' }}>NCKH TLS</Title>
             </div>
 
             <Menu
