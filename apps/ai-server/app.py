@@ -2,13 +2,13 @@ import os
 import google.generativeai as genai
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
-
+from flask_cors import CORS
 # --- 1. LOAD BIẾN MÔI TRƯỜNG ---
 # Khởi chạy hàm này để đọc dữ liệu từ file .env
 load_dotenv()
 
 app = Flask(__name__)
-
+CORS(app)
 # --- 2. CẤU HÌNH GEMINI API ---
 # Lấy key an toàn từ file .env
 GENAI_API_KEY = os.getenv("GENAI_API_KEY") 
@@ -150,6 +150,10 @@ NGUYÊN TẮC TỐI THƯỢNG (BẮT BUỘC PHẢI TUÂN THỦ):
 """
 
 # --- 5. HÀM XỬ LÝ API ---
+# Thêm route này vào TRƯỚC @app.route('/api/chat')
+@app.route('/', methods=['GET'])
+def health_check():
+    return "AI Server is Running and Healthy!", 200
 @app.route('/api/chat', methods=['POST'])
 def chat():
     req_data = request.get_json()
