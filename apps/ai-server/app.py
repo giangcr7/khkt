@@ -1,5 +1,5 @@
 import os
-from openai import OpenAI
+from groq import Groq
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -10,15 +10,15 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# --- 2. CONFIG OPENAI ---
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# --- 2. CONFIG GROQ ---
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not OPENAI_API_KEY:
-    raise ValueError("LỖI: Chưa tìm thấy OPENAI_API_KEY!")
+if not GROQ_API_KEY:
+    raise ValueError("LỖI: Chưa tìm thấy GROQ_API_KEY!")
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = Groq(api_key=GROQ_API_KEY)
 
-# --- 3. DOCUMENT CONTEXT (GIỮ NGUYÊN) ---
+# --- 3. DOCUMENT CONTEXT ---
 DOCUMENT_CONTEXT = """ 
 * Nhóm câu hỏi thường gặp về NCKH:
 Câu 1. NCKH sinh viên là gì?
@@ -128,6 +128,7 @@ Sử dụng các kết quả, bảng số liệu hoặc phân tích trong đề 
 Trình bày rõ ràng, tránh tranh luận cảm tính với hội đồng.
 (5)	 Thừa nhận hạn chế nếu cần thiết
 Nếu câu hỏi liên quan đến hạn chế của đề tài, sinh viên có thể thừa nhận và đề xuất hướng nghiên cứu tiếp theo.
+
 """
 
 # --- 4. SYSTEM PROMPT ---
@@ -151,7 +152,7 @@ Ràng buộc:
 # --- 5. ROUTES ---
 @app.route('/', methods=['GET'])
 def health_check():
-    return "AI Server (OpenAI) is Running!", 200
+    return "AI Server (Groq) is Running!", 200
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -164,7 +165,7 @@ def chat():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # 🔥 model rẻ + ổn định
+            model="llama3-8b-8192",  # 🔥 free + nhanh
             messages=[
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
                 {"role": "user", "content": user_message}
@@ -178,7 +179,7 @@ def chat():
         return jsonify({'reply': reply})
 
     except Exception as e:
-        print(f"🔥 Lỗi OpenAI: {str(e)}")
+        print(f"🔥 Lỗi Groq: {str(e)}")
         return jsonify({'reply': 'Hệ thống AI đang bận, bạn thử lại sau nhé!'})
 
 
