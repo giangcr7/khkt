@@ -1,27 +1,25 @@
 import os
-from google import genai
+from openai import OpenAI
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
 
-# --- 1. LOAD BIẾN MÔI TRƯỜNG ---
+# --- 1. LOAD ENV ---
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app) # Cho phép NestJS gọi vào
+CORS(app)
 
-# --- 2. CẤU HÌNH GEMINI CLIENT MỚI ---
-GENAI_API_KEY = os.getenv("GENAI_API_KEY") 
+# --- 2. CONFIG OPENAI ---
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if not GENAI_API_KEY:
-    raise ValueError("LỖI: Chưa tìm thấy GENAI_API_KEY trong biến môi trường!")
+if not OPENAI_API_KEY:
+    raise ValueError("LỖI: Chưa tìm thấy OPENAI_API_KEY!")
 
-# Khởi tạo Client theo chuẩn SDK mới nhất
-client = genai.Client(api_key=GENAI_API_KEY)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-# --- 3. NỘI DUNG TÀI LIỆU NCKH TLU ---
-# Đây là nội dung từ tài liệu Cô Xuân [cite: 1]
-DOCUMENT_CONTEXT = """
+# --- 3. DOCUMENT CONTEXT (GIỮ NGUYÊN) ---
+DOCUMENT_CONTEXT = """ 
 * Nhóm câu hỏi thường gặp về NCKH:
 Câu 1. NCKH sinh viên là gì?
 Nghiên cứu khoa học sinh viên (NCKH SV) là hoạt động học thuật mà trong đó, sinh viên (cá nhân hoặc nhóm) vận dụng các kiến thức đã học và phương pháp luận khoa học để tiến hành tìm tòi, khám phá, thử nghiệm hoặc giải quyết một vấn đề cụ thể trong chuyên ngành học hoặc trong thực tiễn xã hội.
@@ -135,11 +133,15 @@ Nếu câu hỏi liên quan đến hạn chế của đề tài, sinh viên có 
 # --- 4. SYSTEM PROMPT ---
 SYSTEM_INSTRUCTION = f"""
 Bạn là trợ lý ảo của hệ thống Quản lý NCKH - Đại học Thủy Lợi (TLU).
-Nhiệm vụ: Giải đáp thắc mắc dựa trên tài liệu cung cấp.
+
+Nhiệm vụ:
+- Trả lời câu hỏi dựa trên tài liệu cung cấp
+
 Ràng buộc:
-1. CHỈ sử dụng thông tin trong <TÀI LIỆU>.
-2. Nếu không có thông tin, hãy trả lời: "Xin lỗi, thông tin này hiện chưa có trong cơ sở dữ liệu của mình. Bạn vui lòng liên hệ Giảng viên hướng dẫn hoặc phòng Khoa học Công nghệ nhé!"
-3. Trả lời ngắn gọn, thân thiện.
+1. CHỈ sử dụng thông tin trong tài liệu
+2. Nếu không có thông tin → trả lời:
+"Xin lỗi, thông tin này hiện chưa có trong cơ sở dữ liệu của mình. Bạn vui lòng liên hệ Giảng viên hướng dẫn hoặc phòng Khoa học Công nghệ nhé!"
+3. Trả lời ngắn gọn, thân thiện
 
 <TÀI LIỆU>
 {DOCUMENT_CONTEXT}
@@ -149,7 +151,8 @@ Ràng buộc:
 # --- 5. ROUTES ---
 @app.route('/', methods=['GET'])
 def health_check():
-    return "AI Server (New SDK) is Running!", 200
+    return "AI Server (OpenAI) is Running!", 200
+
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -160,22 +163,25 @@ def chat():
         return jsonify({'reply': 'Bạn chưa nhập nội dung.'})
 
     try:
-        # Đã đổi sang gemini-2.0-flash (Mới nhất, thông minh nhất)
-        response = client.models.generate_content(
-            model='gemini-2.0-flash', 
-            contents=f"{SYSTEM_INSTRUCTION}\n\nCâu hỏi sinh viên: {user_message}"
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # 🔥 model rẻ + ổn định
+            messages=[
+                {"role": "system", "content": SYSTEM_INSTRUCTION},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.3
         )
-        
-        reply = response.text
 
-        print(f"👉 Q: {user_message} | 🤖 A: {reply[:50]}...") 
+        reply = response.choices[0].message.content
+
+        print(f"👉 Q: {user_message} | 🤖 A: {reply[:50]}...")
         return jsonify({'reply': reply})
 
     except Exception as e:
-        print(f"🔥 Lỗi Gemini SDK Mới: {str(e)}")
+        print(f"🔥 Lỗi OpenAI: {str(e)}")
         return jsonify({'reply': 'Hệ thống AI đang bận, bạn thử lại sau nhé!'})
 
+
 if __name__ == '__main__':
-    # Render yêu cầu lấy Port từ môi trường
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
