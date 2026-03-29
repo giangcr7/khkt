@@ -160,9 +160,9 @@ def chat():
         return jsonify({'reply': 'Bạn chưa nhập nội dung.'})
 
     try:
-        # Cách gọi mới của SDK google-genai
+        # Đã đổi sang gemini-2.0-flash (Mới nhất, thông minh nhất)
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.0-flash', 
             contents=f"{SYSTEM_INSTRUCTION}\n\nCâu hỏi sinh viên: {user_message}"
         )
         
