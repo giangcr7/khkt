@@ -80,78 +80,182 @@ const Navbar: React.FC = () => {
     };
 
     return (
-        <Header style={{
-            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#001529', padding: '0 24px', height: '64px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }} onClick={() => navigate('/')}>
-                <RocketOutlined style={{ color: '#1890ff', fontSize: '24px', marginRight: '8px' }} />
-                <Title level={4} style={{ color: '#fff', margin: 0, whiteSpace: 'nowrap' }}>NCKH TLS</Title>
-            </div>
-
-            <Menu
-                theme="dark" mode="horizontal"
-                selectedKeys={[location.pathname]}
-                items={getNavItems()}
-                style={{ flex: 1, minWidth: 0, marginLeft: '20px', border: 'none' }}
+      <Header
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "#001529",
+          padding: "0 24px",
+          height: "64px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            flexShrink: 0,
+          }}
+          onClick={() => navigate("/")}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+            onClick={() => navigate("/")}
+          >
+            <img
+              src="https://res.cloudinary.com/dth3letd8/image/upload/w_80,h_80,c_fill,q_auto,f_auto/v1774770913/z7669734280250_65dcbb05cbcc772483378c29928bf6b4_xlx5hp.jpg"
+              alt="logo"
+              style={{
+                width: 42,
+                height: 42,
+                objectFit: "cover",
+                borderRadius: "50%", // 👈 bo tròn cho đẹp
+                background: "#fff", // 👈 nền trắng nổi logo
+                padding: 3,
+                marginRight: 12,
+                border: "2px solid #1890ff", // 👈 viền xanh đồng bộ Ant Design
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              }}
             />
 
-            <div style={{ flexShrink: 0, marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
-                {role && (
-                    <div style={{ marginRight: '20px', cursor: 'pointer' }} onClick={() => navigate(role.toLowerCase() === 'student' ? '/student/notifications' : '#')}>
-                        <Badge count={unreadCount} overflowCount={99} size="small">
-                            <BellOutlined style={{ color: '#fff', fontSize: '20px' }} />
-                        </Badge>
-                    </div>
-                )}
+            <Title
+              level={4}
+              style={{
+                color: "#fff",
+                margin: 0,
+                whiteSpace: "nowrap",
+                fontWeight: 600,
+                letterSpacing: 0.5,
+              }}
+            >
+              NCKH TLS
+            </Title>
+          </div>{" "}
+        </div>
 
-                {!role ? (
-                    <Button type="primary" shape="round" onClick={() => navigate('/login')}>Đăng nhập</Button>
-                ) : (
-                    <Dropdown
-                        placement="bottomRight"
-                        trigger={['click']}
-                        menu={{
-                            items: [
-                                {
-                                    key: 'dash',
-                                    label: 'Bảng điều khiển (Dashboard)',
-                                    icon: <DashboardOutlined />,
-                                    onClick: () => {
-                                        const r = role.toLowerCase();
-                                        if (r === 'admin') navigate('/admin');
-                                        else if (r === 'lecturer') navigate('/lecturer');
-                                        else navigate('/student');
-                                    }
-                                },
-                                { type: 'divider' },
-                                {
-                                    key: 'logout',
-                                    label: 'Đăng xuất tài khoản',
-                                    icon: <LogoutOutlined />,
-                                    danger: true,
-                                    onClick: handleLogout
-                                }
-                            ]
-                        }}
-                    >
-                        <Space style={{ cursor: 'pointer', padding: '0 8px' }}>
-                            <div style={{ textAlign: 'right', lineHeight: '1.2' }}>
-                                <Text strong style={{ color: '#fff', display: 'block', maxWidth: '120px' }} ellipsis>
-                                    {user.fullName || 'Người dùng'}
-                                </Text>
-                                <Tag color="blue" style={{ fontSize: '10px', margin: 0, border: 'none', lineHeight: '1.6' }}>
-                                    {role === 'ADMIN' ? 'Quản trị viên' : role === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'}
-                                </Tag>
-                            </div>
-                            <Avatar src={user.avatar} icon={<UserOutlined />} style={{ border: '2px solid #1890ff', backgroundColor: '#87d068' }} />
-                        </Space>
-                    </Dropdown>
-                )}
+        <Menu
+          theme="dark"
+          mode="horizontal"
+          selectedKeys={[location.pathname]}
+          items={getNavItems()}
+          style={{ flex: 1, minWidth: 0, marginLeft: "20px", border: "none" }}
+        />
+
+        <div
+          style={{
+            flexShrink: 0,
+            marginLeft: "10px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {role && (
+            <div
+              style={{ marginRight: "20px", cursor: "pointer" }}
+              onClick={() =>
+                navigate(
+                  role.toLowerCase() === "student"
+                    ? "/student/notifications"
+                    : "#",
+                )
+              }
+            >
+              <Badge count={unreadCount} overflowCount={99} size="small">
+                <BellOutlined style={{ color: "#fff", fontSize: "20px" }} />
+              </Badge>
             </div>
-        </Header>
+          )}
+
+          {!role ? (
+            <Button
+              type="primary"
+              shape="round"
+              onClick={() => navigate("/login")}
+            >
+              Đăng nhập
+            </Button>
+          ) : (
+            <Dropdown
+              placement="bottomRight"
+              trigger={["click"]}
+              menu={{
+                items: [
+                  {
+                    key: "dash",
+                    label: "Bảng điều khiển (Dashboard)",
+                    icon: <DashboardOutlined />,
+                    onClick: () => {
+                      const r = role.toLowerCase();
+                      if (r === "admin") navigate("/admin");
+                      else if (r === "lecturer") navigate("/lecturer");
+                      else navigate("/student");
+                    },
+                  },
+                  { type: "divider" },
+                  {
+                    key: "logout",
+                    label: "Đăng xuất tài khoản",
+                    icon: <LogoutOutlined />,
+                    danger: true,
+                    onClick: handleLogout,
+                  },
+                ],
+              }}
+            >
+              <Space style={{ cursor: "pointer", padding: "0 8px" }}>
+                <div style={{ textAlign: "right", lineHeight: "1.2" }}>
+                  <Text
+                    strong
+                    style={{
+                      color: "#fff",
+                      display: "block",
+                      maxWidth: "120px",
+                    }}
+                    ellipsis
+                  >
+                    {user.fullName || "Người dùng"}
+                  </Text>
+                  <Tag
+                    color="blue"
+                    style={{
+                      fontSize: "10px",
+                      margin: 0,
+                      border: "none",
+                      lineHeight: "1.6",
+                    }}
+                  >
+                    {role === "ADMIN"
+                      ? "Quản trị viên"
+                      : role === "LECTURER"
+                        ? "Giảng viên"
+                        : "Sinh viên"}
+                  </Tag>
+                </div>
+                <Avatar
+                  src={user.avatar}
+                  icon={<UserOutlined />}
+                  style={{
+                    border: "2px solid #1890ff",
+                    backgroundColor: "#87d068",
+                  }}
+                />
+              </Space>
+            </Dropdown>
+          )}
+        </div>
+      </Header>
     );
 };
 
