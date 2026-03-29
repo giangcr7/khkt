@@ -150,22 +150,20 @@ Ràng buộc:
 """
 
 # --- 5. ROUTES ---
-@app.route('/', methods=['GET'])
-def health_check():
-    return "AI Server (Groq) is Running!", 200
-
-
-@app.route('/api/chat', methods=['POST'])
+@app.route('/api/chat', methods=['GET', 'POST'])
 def chat():
-    req_data = request.get_json()
-    user_message = req_data.get('message', '')
+    if request.method == 'GET':
+        user_message = request.args.get('message', '')
+    else:
+        req_data = request.get_json()
+        user_message = req_data.get('message', '')
 
     if not user_message:
         return jsonify({'reply': 'Bạn chưa nhập nội dung.'})
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",  # 🔥 free + nhanh
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
                 {"role": "user", "content": user_message}
@@ -181,7 +179,6 @@ def chat():
     except Exception as e:
         print(f"🔥 Lỗi Groq: {str(e)}")
         return jsonify({'reply': 'Hệ thống AI đang bận, bạn thử lại sau nhé!'})
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
