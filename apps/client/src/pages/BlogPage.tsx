@@ -82,8 +82,8 @@ const BlogPage: React.FC = () => {
           <BulbOutlined /> Góc Kinh Nghiệm
         </Title>
         <Paragraph style={{ maxWidth: 600, margin: "0 auto", fontSize: 16 }}>
-          Những chia sẻ thực tế giúp bạn phát triển kỹ năng và định hướng nghề
-          nghiệp.
+          Những kinh nghiệm thực tiễn giúp sinh viên hình thành góc nhìn toàn
+          diện và định hướng rõ ràng trong quá trình nghiên cứu khoa học.
         </Paragraph>
       </div>
 
