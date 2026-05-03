@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Input, List, Avatar, Button, Space, Typography } from 'antd';
-import { SendOutlined, CloseOutlined } from '@ant-design/icons';
+import { Card, Input, List, Avatar, Button, Space, Typography, Badge } from 'antd';
+import { SendOutlined, CloseOutlined, DownOutlined } from '@ant-design/icons'; // Thêm DownOutlined
 import { io, Socket } from 'socket.io-client';
 import api from '../../services/api';
 
@@ -16,33 +16,29 @@ interface ChatWindowProps {
 const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, onClose }) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
-  // 1. Khởi tạo useRef chuẩn TypeScript
+  const [showScrollButton, setShowScrollButton] = useState(false); // 1. Thêm state quản lý nút
+
   const socketRef = useRef<Socket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null); // 2. Thêm ref cho khung cuộn
 
   useEffect(() => {
-    // 2. Chỉ khởi tạo 1 kết nối duy nhất
     const socket = io('https://khkt-backend.onrender.com');
     socketRef.current = socket;
 
-    // 3. Đợi kết nối thành công mới tham gia phòng (Join Room)
     socket.on('connect', () => {
-      console.log("Chat kết nối thành công:", socket.id);
-      socket.emit('joinRoom', roomId); // roomId gửi trực tiếp dưới dạng số
+      socket.emit('joinRoom', roomId);
     });
 
-    // 4. Lắng nghe tin nhắn mới (Tên sự kiện 'receiveMessage' khớp với Backend của sếp)
     socket.on('receiveMessage', (message) => {
       if (message.roomId === roomId) {
         setMessages((prev) => [...prev, message]);
       }
     });
 
-    // 5. Lấy lịch sử tin nhắn từ API
     const fetchHistory = async () => {
       try {
         const res = await api.get(`/chat/rooms/${roomId}`);
-        // Chú ý: Backend trả về messages bên trong object room
         setMessages(res.data.messages || []);
       } catch (error) {
         console.error("Lỗi lấy lịch sử chat:", error);
@@ -50,7 +46,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
     };
     fetchHistory();
 
-    // 6. Cleanup khi đóng cửa sổ chat: Ngắt kết nối để không rò rỉ bộ nhớ
     return () => {
       socket.off('receiveMessage');
       socket.disconnect();
@@ -58,22 +53,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
     };
   }, [roomId]);
 
-  // 7. Tự động cuộn xuống cuối mỗi khi có tin nhắn mới
-  useEffect(() => {
+  // 3. Hàm cuộn xuống đáy
+  const scrollToBottom = () => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setShowScrollButton(false);
+  };
+
+  // Cuộn tự động khi có tin nhắn mới
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
-  // 8. Hàm gửi tin nhắn
+  // 4. Xử lý logic hiện nút khi cuộn lên
+  const handleScroll = () => {
+    if (listContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = listContainerRef.current;
+      // Nếu cách đáy lớn hơn 50px thì hiện nút
+      const isNotAtBottom = scrollHeight - scrollTop - clientHeight > 50;
+      setShowScrollButton(isNotAtBottom);
+    }
+  };
+
   const sendMessage = () => {
     if (!input.trim() || !socketRef.current) return;
-
-    const data = { 
-      roomId, 
-      senderId: currentUser.id, 
-      content: input 
-    };
-
-    // Gửi sự kiện 'sendMessage' lên Gateway
+    const data = { roomId, senderId: currentUser.id, content: input };
     socketRef.current.emit('sendMessage', data);
     setInput('');
   };
@@ -88,55 +91,64 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
       }
       extra={<Button type="text" icon={<CloseOutlined />} onClick={onClose} />}
       style={{ 
-        width: 350, 
-        position: 'fixed', 
-        bottom: 20, 
-        right: 100, 
-        zIndex: 1000, 
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        borderRadius: '12px'
+        width: 350, position: 'fixed', bottom: 20, right: 100, 
+        zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderRadius: '12px'
       }}
       bodyStyle={{ padding: 0 }}
     >
-      <div style={{ height: 300, overflowY: 'auto', padding: 16, backgroundColor: '#f5f5f5' }}>
-<List
-  dataSource={messages}
-  renderItem={(msg) => {
-    // Ép kiểu về String để so sánh cho chắc chắn, tránh lỗi lệch kiểu dữ liệu
-    const isMine = String(msg.senderId) === String(currentUser.id);
-
-    return (
-      <div style={{ 
-        textAlign: isMine ? 'right' : 'left', // Mình gửi thì bên phải, họ gửi thì bên trái
-        marginBottom: 12,
-        padding: '0 10px' 
-      }}>
-        {/* Hiện tên người gửi nếu là tin nhắn của đối phương (tùy chọn) */}
-        {!isMine && (
-          <div style={{ fontSize: '10px', color: '#8c8c8c', marginLeft: '8px', marginBottom: '2px' }}>
-            {receiver.fullName}
-          </div>
-        )}
-
-        <div style={{ 
-          display: 'inline-block', 
-          padding: '8px 12px', 
-          borderRadius: isMine ? '12px 12px 0 12px' : '12px 12px 12px 0', // Bo góc kiểu tin nhắn Messenger
-          backgroundColor: isMine ? '#1890ff' : '#e8e8e8', // Mình màu xanh, họ màu xám nhạt
-          color: isMine ? '#fff' : '#000', // Chữ trắng trên nền xanh, chữ đen trên nền xám
-          maxWidth: '80%',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-          textAlign: 'left' // Nội dung chữ luôn căn trái trong bong bóng
-        }}>
-          {msg.content}
+      <div style={{ position: 'relative' }}> {/* Bọc relative để nút absolute chuẩn xác */}
+        <div 
+          ref={listContainerRef} 
+          onScroll={handleScroll} // Bắt sự kiện cuộn
+          style={{ height: 300, overflowY: 'auto', padding: 16, backgroundColor: '#f5f5f5' }}
+        >
+          <List
+            dataSource={messages}
+            renderItem={(msg) => {
+              const isMine = String(msg.senderId) === String(currentUser.id);
+              return (
+                <div style={{ textAlign: isMine ? 'right' : 'left', marginBottom: 12, padding: '0 10px' }}>
+                  {!isMine && (
+                    <div style={{ fontSize: '10px', color: '#8c8c8c', marginLeft: '8px', marginBottom: '2px' }}>
+                      {receiver.fullName}
+                    </div>
+                  )}
+                  <div style={{ 
+                    display: 'inline-block', padding: '8px 12px', 
+                    borderRadius: isMine ? '12px 12px 0 12px' : '12px 12px 12px 0', 
+                    backgroundColor: isMine ? '#1890ff' : '#e8e8e8', 
+                    color: isMine ? '#fff' : '#000', maxWidth: '80%', 
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)', textAlign: 'left' 
+                  }}>
+                    {msg.content}
+                  </div>
+                </div>
+              );
+            }}
+          />
+          <div ref={scrollRef} />
         </div>
+
+        {/* 5. Nút cuộn xuống (Chỉ hiện khi showScrollButton = true) */}
+        {showScrollButton && (
+          <Button
+            type="primary"
+            shape="circle"
+            icon={<DownOutlined />}
+            size="small"
+            onClick={scrollToBottom}
+            style={{
+              position: 'absolute',
+              bottom: 10,
+              right: '50%',
+              transform: 'translateX(50%)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              opacity: 0.8
+            }}
+          />
+        )}
       </div>
-    );
-  }}
-/>
-        {/* Điểm neo để cuộn chuột */}
-        <div ref={scrollRef} />
-      </div>
+
       <div style={{ padding: 12, borderTop: '1px solid #f0f0f0' }}>
         <Input
           placeholder="Nhập tin nhắn..."
@@ -144,13 +156,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ roomId, currentUser, receiver, 
           onChange={(e) => setInput(e.target.value)}
           onPressEnter={sendMessage}
           suffix={
-            <Button 
-              type="primary" 
-              icon={<SendOutlined />} 
-              onClick={sendMessage} 
-              size="small" 
-              disabled={!input.trim()}
-            />
+            <Button type="primary" icon={<SendOutlined />} onClick={sendMessage} size="small" disabled={!input.trim()} />
           }
         />
       </div>
