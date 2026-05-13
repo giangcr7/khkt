@@ -37,6 +37,7 @@ model User {
   // Module bổ trợ
   recruitmentComments RecruitmentComment[]
   activityLogs        ActivityLog[]
+  analysisHistories AnalysisHistory[]
 
   // --- HỆ THỐNG CHAT ---
   sentMessages      Message[]            @relation("SentMessages")
@@ -286,6 +287,17 @@ model Faq {
   answer    String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+model AnalysisHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  
+  type        String   // Loại phân tích: "YAMANE", "REGRESSION", "HAIR", v.v.
+  inputData   Json     // Lưu các số liệu sinh viên đã nhập (dạng JSON)
+  resultData  Json     // Lưu bảng kết quả tính toán được (dạng JSON)
+  
+  createdAt   DateTime @default(now())
 }
 
 /////////////////////////////////////////////////

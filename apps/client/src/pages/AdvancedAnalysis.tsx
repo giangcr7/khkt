@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Upload, Button, Card, Table, Select, Space, Typography, Alert, message, Steps } from 'antd';
 import { InboxOutlined, BarChartOutlined, RocketOutlined } from '@ant-design/icons';
-import api from '../../services/api';
 import * as XLSX from 'xlsx';
+import api from '../services/api';
 
 const { Dragger } = Upload;
 const { Title, Text } = Typography;
@@ -52,36 +52,58 @@ const AdvancedAnalysis: React.FC = () => {
     }
   };
 
-  return (
-    <div style={{ padding: 40, maxWidth: 1000, margin: '0 auto' }}>
-      <Title level={2}><BarChartOutlined /> Phân tích Hồi quy Tự động (SPSS Style)</Title>
-      
-      <Steps direction="vertical" current={results ? 2 : (file ? 1 : 0)}>
-        <Steps.Step title="Tải lên dữ liệu Excel" description={
-          <Dragger beforeUpload={handleFileUpload} maxCount={1} showUploadList={false}>
-            <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-            <p>Kéo thả file .xlsx hoặc .csv vào đây</p>
-          </Dragger>
-        } />
-
-        <Steps.Step title="Thiết lập mô hình" description={
-          file && (
+return (
+  <div style={{ padding: 40, maxWidth: 1000, margin: '0 auto' }}>
+    <Title level={2}><BarChartOutlined /> Phân tích Hồi quy Tự động (SPSS Style)</Title>
+    
+    <Steps
+      direction="vertical"
+      current={results ? 2 : (file ? 1 : 0)}
+      items={[
+        {
+          title: 'Tải lên dữ liệu Excel',
+          description: (
+            <Dragger beforeUpload={handleFileUpload} maxCount={1} showUploadList={false}>
+              <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+              <p>Kéo thả file .xlsx hoặc .csv vào đây</p>
+            </Dragger>
+          ),
+        },
+        {
+          title: 'Thiết lập mô hình',
+          description: file && (
             <Card style={{ marginTop: 20 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Text strong>Chọn biến Phụ thuộc (Y):</Text>
-                <Select style={{ width: '100%' }} onChange={setYVar} options={columns.map(c => ({ label: c, value: c }))} />
+                <Select 
+                  style={{ width: '100%' }} 
+                  onChange={setYVar} 
+                  options={columns.map(c => ({ label: c, value: c }))} 
+                />
                 
                 <Text strong>Chọn các biến Độc lập (X):</Text>
-                <Select mode="multiple" style={{ width: '100%' }} onChange={setXVars} options={columns.map(c => ({ label: c, value: c }))} />
+                <Select 
+                  mode="multiple" 
+                  style={{ width: '100%' }} 
+                  onChange={setXVars} 
+                  options={columns.map(c => ({ label: c, value: c }))} 
+                />
                 
-                <Button type="primary" icon={<RocketOutlined />} onClick={runAnalysis} loading={loading}>Chạy phân tích</Button>
+                <Button 
+                  type="primary" 
+                  icon={<RocketOutlined />} 
+                  onClick={runAnalysis} 
+                  loading={loading}
+                >
+                  Chạy phân tích
+                </Button>
               </Space>
             </Card>
-          )
-        } />
-
-        <Steps.Step title="Kết quả phân tích" description={
-          results && (
+          ),
+        },
+        {
+          title: 'Kết quả phân tích',
+          description: results && (
             <div style={{ marginTop: 20 }}>
               <Title level={4}>1. Model Summary</Title>
               <Table 
@@ -101,15 +123,20 @@ const AdvancedAnalysis: React.FC = () => {
                 columns={[
                   { title: 'Biến', dataIndex: 'var' },
                   { title: 'B (Unstandardized)', dataIndex: 'b' },
-                  { title: 'Sig.', dataIndex: 'sig', render: (s) => <Text style={{ color: s < 0.05 ? 'red' : 'black' }}>{s}</Text> },
+                  { 
+                    title: 'Sig.', 
+                    dataIndex: 'sig', 
+                    render: (s) => <Text style={{ color: parseFloat(s) < 0.05 ? 'red' : 'black' }}>{s}</Text> 
+                  },
                 ]} 
               />
             </div>
-          )
-        } />
-      </Steps>
-    </div>
-  );
-};
+          ),
+        },
+      ]}
+    />
+  </div>
+);
+}
 
 export default AdvancedAnalysis;

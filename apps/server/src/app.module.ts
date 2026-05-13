@@ -18,7 +18,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { RecruitmentModule } from './recruitment/recruitment.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
-
+import { StatisticsModule } from './statistics/statistics.module';
+import { RegressionModule } from './regression/regression.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -42,8 +43,10 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     RecruitmentModule,
     ChatModule,
     ChatbotModule,
+    StatisticsModule,
+    RegressionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
