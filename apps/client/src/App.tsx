@@ -40,6 +40,7 @@ import RecruitmentDetailPage from './pages/Student/RecruitmentDetailPage';
 import NewsListPage from './pages/NewsListPage';
 import ResourcesPage from './pages/Student/Resources';
 import BlogPage from './pages/BlogPage';
+import SampleCalculator from './pages/SampleCalculator';
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
         <Route path="/post/:id" element={<PostDetail />} />
         <Route path="/news" element={<NewsListPage />} />
         <Route path="/kinh-nghiem" element={<BlogPage />} /> {/* Đã thêm Route Kinh nghiệm */}
+        <Route path="/thong-ke" element={<SampleCalculator />} />
         {/* ========================================================== */}
         {/* PROTECTED ROUTES: Phải đăng nhập & đúng quyền hạn */}
         {/* ========================================================== */}

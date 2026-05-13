@@ -4,7 +4,8 @@ import {
     HomeOutlined, DashboardOutlined, UserOutlined, LogoutOutlined,
     RocketOutlined, CalendarOutlined, ReadOutlined, ProjectOutlined, 
     TeamOutlined, QuestionCircleOutlined, BellOutlined,
-    BulbOutlined // <-- Thêm icon bóng đèn cho mục Kinh nghiệm
+    BulbOutlined,
+    CalculatorOutlined // <-- Thêm icon máy tính cho mục Thống kê
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
@@ -61,8 +62,9 @@ const Navbar: React.FC = () => {
             { key: '/', label: 'Trang chủ', icon: <HomeOutlined />, onClick: () => navigate('/') },
             { key: '/timeline', label: 'Lộ trình', icon: <CalendarOutlined />, onClick: () => navigate('/timeline') },
             { key: '/resources', label: 'Tài liệu', icon: <ReadOutlined />, onClick: () => navigate('/resources') },
-            // 👇 THÊM MENU KINH NGHIỆM Ở ĐÂY 👇
             { key: '/kinh-nghiem', label: 'Kinh nghiệm', icon: <BulbOutlined />, onClick: () => navigate('/kinh-nghiem') },
+            // 👇 THÊM MENU PHÂN TÍCH THỐNG KÊ Ở ĐÂY 👇
+            { key: '/thong-ke', label: 'Thống kê', icon: <CalculatorOutlined />, onClick: () => navigate('/thong-ke') },
             { key: '/faq', label: 'Hỏi đáp', icon: <QuestionCircleOutlined />, onClick: () => navigate('/faq') },
         ];
 
@@ -121,11 +123,11 @@ const Navbar: React.FC = () => {
                 width: 42,
                 height: 42,
                 objectFit: "cover",
-                borderRadius: "50%", // 👈 bo tròn cho đẹp
-                background: "#fff", // 👈 nền trắng nổi logo
+                borderRadius: "50%",
+                background: "#fff",
                 padding: 3,
                 marginRight: 12,
-                border: "2px solid #1890ff", // 👈 viền xanh đồng bộ Ant Design
+                border: "2px solid #1890ff",
                 boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
               }}
             />
@@ -142,7 +144,7 @@ const Navbar: React.FC = () => {
             >
               NCKH TLS
             </Title>
-          </div>{" "}
+          </div>
         </div>
 
         <Menu
