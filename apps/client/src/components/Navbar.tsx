@@ -5,7 +5,8 @@ import {
     RocketOutlined, CalendarOutlined, ReadOutlined, ProjectOutlined, 
     TeamOutlined, QuestionCircleOutlined, BellOutlined,
     BulbOutlined,
-    CalculatorOutlined // <-- Thêm icon máy tính cho mục Thống kê
+    CalculatorOutlined,
+    LineChartOutlined // <-- Thêm icon biểu đồ đường cho mục Hồi quy
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
@@ -63,8 +64,9 @@ const Navbar: React.FC = () => {
             { key: '/timeline', label: 'Lộ trình', icon: <CalendarOutlined />, onClick: () => navigate('/timeline') },
             { key: '/resources', label: 'Tài liệu', icon: <ReadOutlined />, onClick: () => navigate('/resources') },
             { key: '/kinh-nghiem', label: 'Kinh nghiệm', icon: <BulbOutlined />, onClick: () => navigate('/kinh-nghiem') },
-            // 👇 THÊM MENU PHÂN TÍCH THỐNG KÊ Ở ĐÂY 👇
             { key: '/thong-ke', label: 'Thống kê', icon: <CalculatorOutlined />, onClick: () => navigate('/thong-ke') },
+            // 👇 THÊM MENU PHÂN TÍCH HỒI QUY Ở ĐÂY 👇
+            { key: '/phan-tich-hoi-quy', label: 'Hồi quy', icon: <LineChartOutlined />, onClick: () => navigate('/phan-tich-hoi-quy') },
             { key: '/faq', label: 'Hỏi đáp', icon: <QuestionCircleOutlined />, onClick: () => navigate('/faq') },
         ];
 

@@ -41,6 +41,7 @@ import NewsListPage from './pages/NewsListPage';
 import ResourcesPage from './pages/Student/Resources';
 import BlogPage from './pages/BlogPage';
 import SampleCalculator from './pages/SampleCalculator';
+import AdvancedAnalysis from './pages/AdvancedAnalysis';
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
         <Route path="/news" element={<NewsListPage />} />
         <Route path="/kinh-nghiem" element={<BlogPage />} /> {/* Đã thêm Route Kinh nghiệm */}
         <Route path="/thong-ke" element={<SampleCalculator />} />
+        <Route path="/phan-tich-hoi-quy" element={<AdvancedAnalysis />} />
         {/* ========================================================== */}
         {/* PROTECTED ROUTES: Phải đăng nhập & đúng quyền hạn */}
         {/* ========================================================== */}
