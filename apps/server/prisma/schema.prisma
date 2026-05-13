@@ -315,7 +315,8 @@ enum ResourceType {
   REFERENCE   
   TEMPLATE    
   GUIDE       
-  VIDEO       
+  VIDEO      
+  STATISTICS 
 }
 enum PostType {
   NEWS

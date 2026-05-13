@@ -3,7 +3,8 @@ import { Table, Button, Modal, Form, Input, Upload, message, Select, Tag, Popcon
 import {
     UploadOutlined, DeleteOutlined, EditOutlined, LinkOutlined,
     VideoCameraOutlined, EyeOutlined, FilePdfOutlined, FileWordOutlined, DownloadOutlined,
-    BookOutlined, FormOutlined, SafetyCertificateOutlined
+    BookOutlined, FormOutlined, SafetyCertificateOutlined,
+    BarChartOutlined // <-- Thêm icon biểu đồ cho phần quản trị
 } from '@ant-design/icons';
 import api from '../../services/api';
 
@@ -121,12 +122,14 @@ const ManageResources: React.FC = () => {
         {
             title: 'Phân loại',
             dataIndex: 'type',
-            width: 200,
+            width: 220, // Nới rộng thêm một chút để chứa chữ dài
             render: (type: string) => {
                 const config: any = { 
                     REFERENCE: { color: 'blue', label: 'Tài liệu tham khảo', icon: <BookOutlined /> },
                     TEMPLATE: { color: 'cyan', label: 'Mẫu biểu', icon: <FormOutlined /> },
                     GUIDE: { color: 'green', label: 'Quy định - Hướng dẫn', icon: <SafetyCertificateOutlined /> },
+                    // 👇 Cấu hình hiển thị Tag cho mục Thống kê
+                    STATISTICS: { color: 'purple', label: 'Phân tích thống kê', icon: <BarChartOutlined /> }, 
                     VIDEO: { color: 'volcano', label: 'Video', icon: <VideoCameraOutlined /> }
                 };
                 const item = config[type] || { color: 'default', label: type, icon: null };
@@ -155,7 +158,7 @@ const ManageResources: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
                     <div>
                         <Title level={2} style={{ margin: 0 }}>Quản trị Học liệu</Title>
-                        <Text type="secondary">Phân loại: Tài liệu tham khảo - Mẫu biểu - Quy định</Text>
+                        <Text type="secondary">Phân loại: Tài liệu tham khảo - Mẫu biểu - Quy định - Thống kê</Text>
                     </div>
                     <Button type="primary" size="large" icon={<UploadOutlined />} onClick={() => handleOpenModal()} style={{ borderRadius: 8 }}>
                         Thêm tài liệu mới
@@ -174,7 +177,7 @@ const ManageResources: React.FC = () => {
                 width={550}
                 okText="Xác nhận"
                 cancelText="Hủy bỏ"
-                destroyOnClose // Tự động xóa dữ liệu cũ khi đóng modal
+                destroyOnClose
             >
                 <Form form={form} onFinish={handleSubmit} layout="vertical" style={{ marginTop: 24 }}>
                     <Form.Item name="title" label="Tên tài liệu" rules={[{ required: true, message: 'Nhập tiêu đề!' }]}>
@@ -186,6 +189,8 @@ const ManageResources: React.FC = () => {
                             <Select.Option value="REFERENCE">Tài liệu tham khảo</Select.Option>
                             <Select.Option value="TEMPLATE">Mẫu biểu chuẩn</Select.Option>
                             <Select.Option value="GUIDE">Quy định</Select.Option>
+                            {/* 👇 Thêm Option Thống kê vào form chọn */}
+                            <Select.Option value="STATISTICS">Phân tích thống kê</Select.Option>
                             <Select.Option value="VIDEO">Video bài giảng/quy trình</Select.Option>
                         </Select>
                     </Form.Item>

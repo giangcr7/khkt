@@ -19,6 +19,7 @@ import {
   BookOutlined,
   FormOutlined,
   SafetyCertificateOutlined,
+  BarChartOutlined, // <-- Thêm icon biểu đồ cho Phân tích thống kê
 } from "@ant-design/icons";
 import api from "../../services/api";
 
@@ -212,6 +213,16 @@ const ResourcesPage: React.FC = () => {
               </span>
             ),
             children: renderResourceList("GUIDE"),
+          },
+          // 👇 THÊM TAB PHÂN TÍCH THỐNG KÊ Ở ĐÂY 👇
+          {
+            key: "STATISTICS",
+            label: (
+              <span>
+                <BarChartOutlined /> Phân tích thống kê
+              </span>
+            ),
+            children: renderResourceList("STATISTICS"),
           },
           {
             key: "VIDEO",
