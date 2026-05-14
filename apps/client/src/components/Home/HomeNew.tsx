@@ -90,19 +90,37 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
   // =========================
   // PREVIEW URL
   // =========================
-const getPreviewUrl = (url: string) => {
-  if (!url) return "";
-  if (url.includes("cloudinary.com")) {
-    let previewUrl = url
-      .replace("/fl_attachment/", "/")
-      .replace("/fl_attachment", "");
-if (previewUrl.match(/\.pdf(\?.*)?$/i)) {
-  previewUrl = previewUrl.replace("/upload/", "/upload/fl_inline/");
-}
-    return previewUrl;
-  }
-  return url;
-};
+// =========================
+  // PREVIEW URL
+  // =========================
+  const getPreviewUrl = (url: string) => {
+    if (!url) return "";
+
+    // Nếu là file PDF, ảnh thì cho trình duyệt tự lo (dùng fl_inline của Cloudinary)
+    if (url.match(/\.(pdf|jpg|jpeg|png)$/i)) {
+      if (url.includes("cloudinary.com")) {
+        let previewUrl = url
+          .replace("/fl_attachment/", "/")
+          .replace("/fl_attachment", "");
+        return previewUrl.replace("/upload/", "/upload/fl_inline/");
+      }
+      return url;
+    }
+
+    // Nếu là file Word, Excel, PowerPoint -> Dùng Google Docs Viewer để đọc file
+    if (url.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i)) {
+       // Cần đảm bảo link gốc không có cấu hình ép tải về của Cloudinary
+       let cleanUrl = url;
+       if (url.includes("cloudinary.com")) {
+           cleanUrl = url.replace("/fl_attachment/", "/").replace("/fl_attachment", "");
+       }
+       // Trả về link đã bọc qua Google Viewer
+       return `https://docs.google.com/viewer?url=${encodeURIComponent(cleanUrl)}&embedded=true`;
+    }
+
+    // Fallback mặc định
+    return url;
+  };
 
   // =========================
   // CARD COVER
