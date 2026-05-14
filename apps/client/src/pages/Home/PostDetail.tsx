@@ -91,7 +91,7 @@ const PostDetail: React.FC = () => {
                         >
                             <Space direction="vertical" style={{ width: '100%' }}>
                                 <Title level={5} style={{ margin: 0 }}><LinkOutlined /> Tài liệu & Liên kết liên quan:</Title>
-                                <Text type="secondary">Admin đã đính kèm một liên kết ngoài cho bài viết này. Bạn có thể truy cập để xem chi tiết tài liệu hoặc video hướng dẫn.</Text>
+                                <Text type="secondary">Admin đã đính kèm một liên kết ngoài cho bài viết này. Bạn có thể truy cập để xem chi tiết tài liệu</Text>
                                 <Button
                                     type="primary"
                                     size="large"

@@ -1,4 +1,19 @@
-import { Controller, Get, Post, Body, UploadedFile, UseInterceptors, Delete, Param, ParseIntPipe, UseGuards, Query, Patch, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UploadedFile,
+  UseInterceptors,
+  Delete,
+  Param,
+  ParseIntPipe,
+  UseGuards,
+  Query,
+  Patch,
+  BadRequestException,
+} from '@nestjs/common';
+
 import { ResourcesService } from './resources.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
@@ -14,8 +29,8 @@ import { UploadService } from 'src/upload/upload.service';
 export class ResourcesController {
   constructor(
     private readonly resourcesService: ResourcesService,
-    private readonly uploadService: UploadService 
-  ) { }
+    private readonly uploadService: UploadService,
+  ) {}
 
   // 1. Xem danh sách (CÔNG KHAI)
   @Public()
@@ -24,32 +39,36 @@ export class ResourcesController {
     return this.resourcesService.findAll(type);
   }
 
-  // 2. Upload File hoặc Lưu Link (Chỉ Admin)
+  // 2. Upload tài liệu (Chỉ Admin)
   @Post('upload')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 20 * 1024 * 1024 } 
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   async create(
-    @Body() body: { title: string; type: ResourceType; link?: string; description?: string },
-    @UploadedFile() file: Express.Multer.File
+    @Body()
+    body: {
+      title: string;
+      type: ResourceType;
+      description?: string;
+    },
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    let finalUrl = body.link;
-    if (file) {
-      finalUrl = await this.uploadService.save(file, 'resources'); 
+    if (!file) {
+      throw new BadRequestException('Bạn phải upload file!');
     }
 
-    if (!finalUrl) {
-      throw new BadRequestException('Bạn phải upload file hoặc nhập link video!');
-    }
+    const fileUrl = await this.uploadService.save(file, 'resources');
 
     return this.resourcesService.create({
       title: body.title,
       type: body.type,
       description: body.description,
-      fileUrl: finalUrl 
+      fileUrl,
     });
   }
 
@@ -57,25 +76,32 @@ export class ResourcesController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 20 * 1024 * 1024 }
-  }))
-  async update( 
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { title?: string; type?: ResourceType; link?: string; description?: string },
-    @UploadedFile() file: Express.Multer.File
+    @Body()
+    body: {
+      title?: string;
+      type?: ResourceType;
+      description?: string;
+    },
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    let newUrl: string | undefined = body.link;
+    let newUrl: string | undefined;
 
     if (file) {
-      newUrl = await this.uploadService.save(file, 'resources'); 
+      newUrl = await this.uploadService.save(file, 'resources');
     }
 
     return this.resourcesService.update(id, {
       title: body.title,
       type: body.type,
       description: body.description,
-      fileUrl: newUrl
+      fileUrl: newUrl,
     });
   }
 

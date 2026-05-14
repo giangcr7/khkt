@@ -9,18 +9,18 @@ import {
   Tooltip,
   Empty,
 } from "antd";
+
 import {
   DownloadOutlined,
-  YoutubeOutlined,
   FileWordOutlined,
-  VideoCameraOutlined,
   EyeOutlined,
   FileTextOutlined,
   BookOutlined,
   FormOutlined,
   SafetyCertificateOutlined,
-  BarChartOutlined, // <-- Thêm icon biểu đồ cho Phân tích thống kê
+  BarChartOutlined,
 } from "@ant-design/icons";
+
 import api from "../../services/api";
 
 const { Title, Text } = Typography;
@@ -29,9 +29,13 @@ const ResourcesPage: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // =========================
+  // FETCH DATA
+  // =========================
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+
       try {
         const res = await api.get("/resources");
         setData(res.data);
@@ -41,23 +45,38 @@ const ResourcesPage: React.FC = () => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
-  // 👉 tối ưu Cloudinary
+  // =========================
+  // OPTIMIZE CLOUDINARY
+  // =========================
   const optimizeImage = (url: string) => {
     if (!url || !url.includes("cloudinary.com")) return url;
-    return url.replace("/upload/", "/upload/w_400,h_250,c_fill,q_auto,f_auto/");
+
+    return url.replace(
+      "/upload/",
+      "/upload/w_400,h_250,c_fill,q_auto,f_auto/"
+    );
   };
 
+  // =========================
+  // DOWNLOAD URL
+  // =========================
   const getDownloadUrl = (url: string) => {
     if (!url) return "";
+
     if (url.includes("cloudinary.com")) {
       return url.replace("/upload/", "/upload/fl_attachment/");
     }
+
     return url;
   };
 
+  // =========================
+  // RENDER COVER
+  // =========================
   const renderCardCover = (item: any) => {
     const url = item.fileUrl || "";
     const isPDF = url.toLowerCase().endsWith(".pdf");
@@ -71,12 +90,17 @@ const ResourcesPage: React.FC = () => {
 
     if (isPDF) {
       const thumbnailUrl = url.replace(/\.pdf$/i, ".jpg");
+
       return (
         <div style={coverStyle}>
           <img
             src={optimizeImage(thumbnailUrl)}
             alt="Preview"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
             onError={(e) => {
               (e.target as any).src =
                 "https://placehold.co/400x500/1890ff/ffffff?text=Document";
@@ -96,18 +120,29 @@ const ResourcesPage: React.FC = () => {
           background: "linear-gradient(135deg, #91d5ff, #40a9ff)",
         }}
       >
-        <FileWordOutlined style={{ fontSize: "48px", color: "#fff" }} />
+        <FileWordOutlined style={{ fontSize: 48, color: "#fff" }} />
       </div>
     );
   };
 
+  // =========================
+  // RENDER LIST
+  // =========================
   const renderResourceList = (type: string) => (
     <List
-      grid={{ gutter: 20, xs: 1, sm: 2, md: 2, lg: 2 }}
+      grid={{
+        gutter: 20,
+        xs: 1,
+        sm: 2,
+        md: 2,
+        lg: 2,
+      }}
       dataSource={data.filter((d: any) => d.type === type)}
       loading={loading}
       locale={{
-        emptyText: <Empty description={`Chưa có ${type.toLowerCase()} nào`} />,
+        emptyText: (
+          <Empty description={`Chưa có ${type.toLowerCase()} nào`} />
+        ),
       }}
       renderItem={(item: any) => (
         <List.Item>
@@ -133,6 +168,7 @@ const ResourcesPage: React.FC = () => {
               >
                 Tải
               </Button>,
+
               <Button
                 type="text"
                 icon={<EyeOutlined />}
@@ -143,10 +179,12 @@ const ResourcesPage: React.FC = () => {
               </Button>,
             ]}
             onMouseEnter={(e) => {
-              (e.currentTarget as any).style.transform = "translateY(-5px)";
+              (e.currentTarget as any).style.transform =
+                "translateY(-5px)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as any).style.transform = "translateY(0)";
+              (e.currentTarget as any).style.transform =
+                "translateY(0)";
             }}
           >
             <Card.Meta
@@ -158,8 +196,9 @@ const ResourcesPage: React.FC = () => {
                 </Tooltip>
               }
               description={
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  📅 {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  📅{" "}
+                  {new Date(item.createdAt).toLocaleDateString("vi-VN")}
                 </Text>
               }
             />
@@ -170,12 +209,18 @@ const ResourcesPage: React.FC = () => {
   );
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "40px 20px" }}>
+    <div
+      style={{
+        maxWidth: "1100px",
+        margin: "0 auto",
+        padding: "40px 20px",
+      }}
+    >
       <div
         style={{
           marginBottom: 32,
           borderBottom: "2px solid #f0f0f0",
-          paddingBottom: "16px",
+          paddingBottom: 16,
         }}
       >
         <Title level={2}>
@@ -189,80 +234,50 @@ const ResourcesPage: React.FC = () => {
         items={[
           {
             key: "REFERENCE",
+
             label: (
               <span>
                 <BookOutlined /> Tài liệu tham khảo
               </span>
             ),
+
             children: renderResourceList("REFERENCE"),
           },
+
           {
             key: "TEMPLATE",
+
             label: (
               <span>
                 <FormOutlined /> Mẫu biểu
               </span>
             ),
+
             children: renderResourceList("TEMPLATE"),
           },
+
           {
             key: "GUIDE",
+
             label: (
               <span>
-                <SafetyCertificateOutlined /> Hướng dẫn
+                <SafetyCertificateOutlined /> Quy định & hướng dẫn 
               </span>
             ),
+
             children: renderResourceList("GUIDE"),
           },
-          // 👇 THÊM TAB PHÂN TÍCH THỐNG KÊ Ở ĐÂY 👇
+
           {
             key: "STATISTICS",
+
             label: (
               <span>
                 <BarChartOutlined /> Phân tích thống kê
               </span>
             ),
+
             children: renderResourceList("STATISTICS"),
-          },
-          {
-            key: "VIDEO",
-            label: (
-              <span>
-                <VideoCameraOutlined /> Video
-              </span>
-            ),
-            children: (
-              <List
-                grid={{ gutter: 20, xs: 1, sm: 2, md: 2, lg: 2 }}
-                dataSource={data.filter((d: any) => d.type === "VIDEO")}
-                renderItem={(item: any) => (
-                  <List.Item>
-                    <Card
-                      hoverable
-                      style={{ borderRadius: "16px", overflow: "hidden" }}
-                      cover={
-                        <div
-                          style={{
-                            height: "180px",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            background: "#ff4d4f",
-                          }}
-                        >
-                          <YoutubeOutlined
-                            style={{ fontSize: "64px", color: "#fff" }}
-                          />
-                        </div>
-                      }
-                      onClick={() => window.open(item.fileUrl, "_blank")}
-                    >
-                      <Card.Meta title={<Text strong>{item.title}</Text>} />
-                    </Card>
-                  </List.Item>
-                )}
-              />
-            ),
           },
         ]}
       />

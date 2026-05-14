@@ -1,4 +1,12 @@
-import { PrismaClient, Role, ProjectStatus, MemberRole, ResourceType, PostType, RecruitmentStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  Role,
+  ProjectStatus,
+  MemberRole,
+  ResourceType,
+  PostType,
+  RecruitmentStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -53,8 +61,12 @@ async function main() {
   });
 
   // 3. Tạo Topics (Lĩnh vực)
-  const topicIt = await prisma.topic.create({ data: { name: 'Công nghệ thông tin' } });
-  const topicAi = await prisma.topic.create({ data: { name: 'Trí tuệ nhân tạo' } });
+  const topicIt = await prisma.topic.create({
+    data: { name: 'Công nghệ thông tin' },
+  });
+  const topicAi = await prisma.topic.create({
+    data: { name: 'Trí tuệ nhân tạo' },
+  });
 
   // 4. Tạo Đề tài (Projects)
   const project1 = await prisma.project.create({
@@ -83,13 +95,15 @@ async function main() {
     data: [
       {
         title: 'Thông báo: Phát động cuộc thi NCKH 2026',
-        content: 'Toàn bộ sinh viên đều có quyền đăng ký tham gia cuộc thi cấp trường...',
+        content:
+          'Toàn bộ sinh viên đều có quyền đăng ký tham gia cuộc thi cấp trường...',
         type: PostType.ANNOUNCEMENT,
         authorId: admin.id,
       },
       {
         title: 'Hướng dẫn viết thuyết minh đề tài chuẩn ISO',
-        content: 'Bài viết chia sẻ chi tiết cách trình bày nội dung nghiên cứu khoa học...',
+        content:
+          'Bài viết chia sẻ chi tiết cách trình bày nội dung nghiên cứu khoa học...',
         type: PostType.NEWS, // Đổi từ GUIDE sang NEWS
         authorId: lecturer1.id,
         topicId: topicIt.id,
@@ -100,17 +114,13 @@ async function main() {
   // 7. Tạo Tài liệu (Resources)
   await prisma.resource.createMany({
     data: [
-      { 
-        title: 'Mẫu thuyết minh đề tài (.docx)', 
-        description: 'Tài liệu hướng dẫn trình bày đề tài NCKH theo chuẩn của Bộ.',
-        fileUrl: 'https://res.cloudinary.com/demo/image/upload/sample_file.docx', 
-        type: ResourceType.TEMPLATE 
-      },
-      { 
-        title: 'Video hướng dẫn tra cứu tài liệu IEEE', 
-        description: 'Các bước để khai thác thư viện số IEEE Xplore hiệu quả.',
-        fileUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 
-        type: ResourceType.VIDEO 
+      {
+        title: 'Mẫu thuyết minh đề tài (.docx)',
+        description:
+          'Tài liệu hướng dẫn trình bày đề tài NCKH theo chuẩn của Bộ.',
+        fileUrl:
+          'https://res.cloudinary.com/demo/image/upload/sample_file.docx',
+        type: ResourceType.TEMPLATE,
       },
     ],
   });
@@ -150,13 +160,15 @@ async function main() {
     data: [
       {
         question: 'NCKH sinh viên có được tính điểm rèn luyện không?',
-        answer: 'Có, tùy theo cấp bậc giải thưởng mà sinh viên được cộng từ 5-15 điểm rèn luyện.',
+        answer:
+          'Có, tùy theo cấp bậc giải thưởng mà sinh viên được cộng từ 5-15 điểm rèn luyện.',
       },
       {
         question: 'Giảng viên ngoài trường có được hướng dẫn không?',
-        answer: 'Giảng viên hướng dẫn chính phải là cán bộ thuộc trường, giảng viên ngoài trường có thể làm hướng dẫn phụ.',
-      }
-    ]
+        answer:
+          'Giảng viên hướng dẫn chính phải là cán bộ thuộc trường, giảng viên ngoài trường có thể làm hướng dẫn phụ.',
+      },
+    ],
   });
 
   // 11. Tạo Thông báo mẫu cho Sinh viên
@@ -169,10 +181,10 @@ async function main() {
         link: '/student/my-project',
         isRead: false,
       },
-    ]
+    ],
   });
 
-  console.log('✅ Đã nạp dữ liệu mẫu sạch sẽ và thành công!');
+  console.log('Đã nạp dữ liệu mẫu sạch sẽ và thành công!');
 }
 
 main()
