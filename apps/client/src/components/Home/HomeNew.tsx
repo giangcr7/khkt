@@ -130,7 +130,7 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
         <div style={{ padding: '80px 0', background: '#f8f9fa' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40 }}>
-                    <Title level={2} style={{ margin: 0, color: '#1a3353' }}>📰 TIN TỨC & HƯỚNG DẪN MỚI</Title>
+                    <Title level={2} style={{ margin: 0, color: '#1a3353' }}>CHIA SẺ KINH NGHIỆM</Title>
                     <Button type="primary" ghost onClick={() => navigate('/news')} icon={<ArrowRightOutlined />}>Xem tất cả</Button>
                 </div>
 
