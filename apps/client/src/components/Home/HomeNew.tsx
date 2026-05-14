@@ -90,11 +90,19 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
   // =========================
   // PREVIEW URL
   // =========================
-  const getPreviewUrl = (url: string) => {
-    if (!url) return "";
-
-    return url.replace("/fl_attachment", "");
-  };
+const getPreviewUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("cloudinary.com")) {
+    let previewUrl = url
+      .replace("/fl_attachment/", "/")
+      .replace("/fl_attachment", "");
+if (previewUrl.match(/\.pdf(\?.*)?$/i)) {
+  previewUrl = previewUrl.replace("/upload/", "/upload/fl_inline/");
+}
+    return previewUrl;
+  }
+  return url;
+};
 
   // =========================
   // CARD COVER

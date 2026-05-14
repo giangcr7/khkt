@@ -68,9 +68,13 @@ const BlogPage: React.FC = () => {
   const getDownloadUrl = (url: string) => {
     if (!url) return "";
 
-    // Cloudinary download
     if (url.includes("cloudinary.com")) {
-      return url.replace(
+      // Xóa fl_inline nếu có trước, rồi thêm fl_attachment
+      let downloadUrl = url
+        .replace("/fl_inline/", "/")
+        .replace("/fl_inline", "");
+
+      return downloadUrl.replace(
         "/upload/",
         "/upload/fl_attachment/"
       );
@@ -83,9 +87,21 @@ const BlogPage: React.FC = () => {
   const getPreviewUrl = (url: string) => {
     if (!url) return "";
 
-    // Cloudinary preview trực tiếp
     if (url.includes("cloudinary.com")) {
-      return url.replace("/fl_attachment", "");
+      // Xóa fl_attachment nếu có
+      let previewUrl = url
+        .replace("/fl_attachment/", "/")
+        .replace("/fl_attachment", "");
+
+      // Thêm fl_inline cho PDF để hiển thị trong tab thay vì tải về
+      if (previewUrl.match(/\.pdf(\?.*)?$/i)) {
+        previewUrl = previewUrl.replace(
+          "/upload/",
+          "/upload/fl_inline/"
+        );
+      }
+
+      return previewUrl;
     }
 
     return url;
