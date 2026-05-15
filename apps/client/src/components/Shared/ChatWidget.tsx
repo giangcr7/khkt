@@ -88,16 +88,19 @@ const ChatWidget: React.FC = () => {
         ...prev,
         botMsg,
       ]);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "AI đang bận, thử lại sau nhé!",
-        },
-      ]);
-    } finally {
+    } catch (error: any) {
+  console.error("Chatbot error:", error);
+  console.error("Response:", error?.response?.data);
+  console.error("Status:", error?.response?.status);
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      role: "assistant",
+      content: `Lỗi: ${error?.response?.status} - ${error?.message}`,
+    },
+  ]);
+} finally {
       setLoading(false);
     }
   };

@@ -20,6 +20,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { FileProxyController } from './file-proxy.controller';
+import { HealthController } from './health.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -45,7 +46,7 @@ import { FileProxyController } from './file-proxy.controller';
     ChatbotModule,
     StatisticsModule,
   ],
-  controllers: [AppController, FileProxyController],
+  controllers: [AppController, FileProxyController, HealthController],
   providers: [AppService],
 })
 export class AppModule {}

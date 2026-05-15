@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import api from "./services/api";
 
 // Layouts
 import StudentLayout from "./layouts/StudentLayout";
@@ -42,6 +44,15 @@ import ResourcesPage from "./pages/Student/Resources";
 import BlogPage from "./pages/BlogPage";
 
 function App() {
+  useEffect(() => {
+    const ping = () => api.get("/health").catch(() => {});
+
+    ping(); // ping ngay khi mở app
+    const interval = setInterval(ping, 10 * 60 * 1000); // mỗi 10 phút
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <BrowserRouter>
       {/* Navbar luôn hiển thị ở trên cùng */}
@@ -63,7 +74,7 @@ function App() {
         {/* ========================================================== */}
         {/* PROTECTED ROUTES: Phải đăng nhập & đúng quyền hạn */}
         {/* ========================================================== */}
-        
+
         {/* PHÂN HỆ SINH VIÊN */}
         <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
           <Route path="/student" element={<StudentLayout />}>
@@ -75,7 +86,7 @@ function App() {
             <Route path="recruitment/:id" element={<RecruitmentDetailPage />} />
           </Route>
         </Route>
-        
+
         {/* PHÂN HỆ GIẢNG VIÊN */}
         <Route element={<ProtectedRoute allowedRoles={["LECTURER"]} />}>
           <Route path="/lecturer" element={<LecturerLayout />}>
@@ -85,7 +96,7 @@ function App() {
             <Route path="manage-projects/:id" element={<ManageProjects />} />
           </Route>
         </Route>
-        
+
         {/* PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN) */}
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -102,7 +113,7 @@ function App() {
             <Route path="user-management" element={<UserManagement />} />
           </Route>
         </Route>
-        
+
         {/* Redirect nếu sai đường dẫn về trang chủ */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
