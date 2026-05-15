@@ -36,53 +36,24 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
   // =========================
   // DOWNLOAD FILE
   // =========================
-  const handleDownload = async (
-    url: string,
-    title: string
-  ) => {
-    const hide = message.loading(
-      "Đang chuẩn bị tệp tin...",
-      0
-    );
-
+  const handleDownload = async (url: string, title: string) => {
+    const hide = message.loading("Đang chuẩn bị tệp tin...", 0);
     try {
       const response = await fetch(url);
-
       const blob = await response.blob();
-
-      const blobUrl =
-        window.URL.createObjectURL(blob);
-
-      const extension =
-        url
-          .split(".")
-          .pop()
-          ?.split("?")[0] || "file";
-
-      const link =
-        document.createElement("a");
-
+      const blobUrl = window.URL.createObjectURL(blob);
+      const extension = url.split(".").pop()?.split("?")[0] || "file";
+      const link = document.createElement("a");
       link.href = blobUrl;
-
-      link.download = `${title.replace(
-        /[/\\?%*:|"<>]/g,
-        "-"
-      )}.${extension}`;
-
+      link.download = `${title.replace(/[/\\?%*:|"<>]/g, "-")}.${extension}`;
       document.body.appendChild(link);
-
       link.click();
-
       document.body.removeChild(link);
-
       window.URL.revokeObjectURL(blobUrl);
-
       hide();
-
       message.success("Tải xuống thành công");
     } catch (error) {
       hide();
-
       window.open(url, "_blank");
     }
   };
@@ -90,36 +61,48 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
   // =========================
   // PREVIEW URL
   // =========================
-// =========================
-  // PREVIEW URL
-  // =========================
   const getPreviewUrl = (url: string) => {
     if (!url) return "";
 
-    // Nếu là file PDF, ảnh thì cho trình duyệt tự lo (dùng fl_inline của Cloudinary)
-    if (url.match(/\.(pdf|jpg|jpeg|png)$/i)) {
-      if (url.includes("cloudinary.com")) {
-        let previewUrl = url
+    const API_BASE = import.meta.env.VITE_API_URL;
+    const isCloudinary = url.includes("cloudinary.com");
+
+    // Ảnh có extension -> qua proxy để hiển thị inline
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      return `${API_BASE}/proxy/file?url=${encodeURIComponent(url)}`;
+    }
+
+    // PDF có extension -> qua proxy
+    if (url.match(/\.pdf$/i)) {
+      return `${API_BASE}/proxy/file?url=${encodeURIComponent(url)}`;
+    }
+
+    // Word/Excel/PPT có extension -> Google Docs Viewer
+    if (url.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i)) {
+      let cleanUrl = url;
+      if (isCloudinary) {
+        cleanUrl = url
           .replace("/fl_attachment/", "/")
           .replace("/fl_attachment", "");
-        return previewUrl.replace("/upload/", "/upload/fl_inline/");
       }
-      return url;
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(cleanUrl)}&embedded=true`;
     }
 
-    // Nếu là file Word, Excel, PowerPoint -> Dùng Google Docs Viewer để đọc file
-    if (url.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i)) {
-       // Cần đảm bảo link gốc không có cấu hình ép tải về của Cloudinary
-       let cleanUrl = url;
-       if (url.includes("cloudinary.com")) {
-           cleanUrl = url.replace("/fl_attachment/", "/").replace("/fl_attachment", "");
-       }
-       // Trả về link đã bọc qua Google Viewer
-       return `https://docs.google.com/viewer?url=${encodeURIComponent(cleanUrl)}&embedded=true`;
+    // Cloudinary raw upload (không có extension) -> Google Docs Viewer
+    // vì có thể là Word/Excel/PDF, Viewer hỗ trợ tất cả
+    if (isCloudinary && url.includes("/raw/upload/")) {
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
     }
 
-    // Fallback mặc định
     return url;
+  };
+
+  // =========================
+  // PREVIEW
+  // =========================
+  const handlePreview = (url: string) => {
+    const previewUrl = getPreviewUrl(url);
+    window.open(previewUrl, "_blank");
   };
 
   // =========================
@@ -127,20 +110,10 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
   // =========================
   const renderCardCover = (item: any) => {
     const thumbnailUrl = item.thumbnail;
-
-    const fileUrl = (
-      item.externalLink || ""
-    ).toLowerCase();
-
+    const fileUrl = (item.externalLink || "").toLowerCase();
     const isPDF = fileUrl.endsWith(".pdf");
-
-    const isImage =
-      fileUrl.match(
-        /\.(jpeg|jpg|gif|png|webp)$/i
-      ) != null;
-
-    const isWord =
-      fileUrl.match(/\.(doc|docx)$/i) != null;
+    const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
+    const isWord = fileUrl.match(/\.(doc|docx)$/i) != null;
 
     const coverStyle: React.CSSProperties = {
       height: 220,
@@ -155,46 +128,29 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
     const defaultCoverImage =
       "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?q=80&w=800&auto=format&fit=crop";
 
-    // =========================
     // THUMBNAIL
-    // =========================
-    if (
-      thumbnailUrl &&
-      thumbnailUrl !== "null" &&
-      thumbnailUrl.trim() !== ""
-    ) {
+    if (thumbnailUrl && thumbnailUrl !== "null" && thumbnailUrl.trim() !== "") {
       return (
         <div style={coverStyle}>
           <img
             src={thumbnailUrl}
             alt="thumbnail"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>
       );
     }
 
-    // =========================
-    // FILE IMAGE
-    // =========================
     if (fileUrl) {
+      // IMAGE
       if (isImage) {
         return (
           <div style={coverStyle}>
             <img
               src={item.externalLink}
               alt="attachment"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
-
             <div
               style={{
                 position: "absolute",
@@ -206,30 +162,15 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                 display: "flex",
               }}
             >
-              <FileImageOutlined
-                style={{
-                  fontSize: 20,
-                  color: "#52c41a",
-                }}
-              />
+              <FileImageOutlined style={{ fontSize: 20, color: "#52c41a" }} />
             </div>
           </div>
         );
       }
 
-      // =========================
-      // PDF PREVIEW
-      // =========================
-      if (
-        isPDF &&
-        fileUrl.includes("cloudinary")
-      ) {
-        const pdfThumb =
-          item.externalLink.replace(
-            /\.pdf$/i,
-            ".jpg"
-          );
-
+      // PDF
+      if (isPDF && fileUrl.includes("cloudinary")) {
+        const pdfThumb = item.externalLink.replace(/\.pdf$/i, ".jpg");
         return (
           <div style={coverStyle}>
             <img
@@ -242,21 +183,16 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                 objectPosition: "top",
               }}
               onError={(e) => {
-                (
-                  e.target as HTMLImageElement
-                ).src = defaultCoverImage;
+                (e.target as HTMLImageElement).src = defaultCoverImage;
               }}
             />
-
             <div
               style={{
                 position: "absolute",
                 inset: 0,
-                background:
-                  "rgba(0,0,0,0.12)",
+                background: "rgba(0,0,0,0.12)",
               }}
             />
-
             <div
               style={{
                 position: "absolute",
@@ -268,32 +204,20 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                 display: "flex",
               }}
             >
-              <FilePdfOutlined
-                style={{
-                  fontSize: 20,
-                  color: "#ff4d4f",
-                }}
-              />
+              <FilePdfOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />
             </div>
           </div>
         );
       }
 
-      // =========================
       // OTHER FILES
-      // =========================
       return (
         <div style={coverStyle}>
           <img
             src={defaultCoverImage}
             alt="default"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
-
           <div
             style={{
               position: "absolute",
@@ -301,7 +225,6 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
               background: "rgba(0,0,0,0.2)",
             }}
           />
-
           <div
             style={{
               position: "absolute",
@@ -314,40 +237,23 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
             }}
           >
             {isWord ? (
-              <FileWordOutlined
-                style={{
-                  fontSize: 20,
-                  color: "#1677ff",
-                }}
-              />
+              <FileWordOutlined style={{ fontSize: 20, color: "#1677ff" }} />
             ) : (
-              <FileUnknownOutlined
-                style={{
-                  fontSize: 20,
-                  color: "#faad14",
-                }}
-              />
+              <FileUnknownOutlined style={{ fontSize: 20, color: "#faad14" }} />
             )}
           </div>
         </div>
       );
     }
 
-    // =========================
     // DEFAULT COVER
-    // =========================
     return (
       <div style={coverStyle}>
         <img
           src={defaultCoverImage}
           alt="default"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-
         <div
           style={{
             position: "absolute",
@@ -360,36 +266,18 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
   };
 
   return (
-    <div
-      style={{
-        padding: "80px 0",
-        background: "#f8f9fa",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          padding: "0 20px",
-        }}
-      >
+    <div style={{ padding: "80px 0", background: "#f8f9fa" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px" }}>
         {/* HEADER */}
         <div
           style={{
             display: "flex",
-            justifyContent:
-              "space-between",
+            justifyContent: "space-between",
             alignItems: "center",
             marginBottom: 40,
           }}
         >
-          <Title
-            level={2}
-            style={{
-              margin: 0,
-              color: "#1a3353",
-            }}
-          >
+          <Title level={2} style={{ margin: 0, color: "#1a3353" }}>
             CHIA SẺ KINH NGHIỆM
           </Title>
 
@@ -406,12 +294,7 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
         {/* LIST */}
         <Row gutter={[24, 24]}>
           {posts.map((item: any) => (
-            <Col
-              xs={24}
-              sm={12}
-              md={8}
-              key={item.id}
-            >
+            <Col xs={24} sm={12} md={8} key={item.id}>
               <Card
                 hoverable
                 style={{
@@ -419,65 +302,40 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                   overflow: "hidden",
                   height: "100%",
                   border: "none",
-                  boxShadow:
-                    "0 4px 14px rgba(0,0,0,0.06)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
                 }}
-                styles={{
-                  body: {
-                    padding: 20,
-                  },
-                }}
+                styles={{ body: { padding: 20 } }}
                 cover={renderCardCover(item)}
                 actions={[
-                  // =========================
                   // VIEW
-                  // =========================
-                  <Tooltip
-                    title="Xem tài liệu"
-                    key="view"
-                  >
+                  <Tooltip title="Xem tài liệu" key="view">
                     <EyeOutlined
                       style={{
                         fontSize: 18,
                         color: "#1677ff",
+                        cursor: "pointer",
                       }}
                       onClick={() => {
-                        if (
-                          item.externalLink
-                        ) {
-                          window.open(
-                            getPreviewUrl(
-                              item.externalLink
-                            ),
-                            "_blank"
-                          );
+                        if (item.externalLink) {
+                          handlePreview(item.externalLink);
                         } else {
-                          navigate(
-                            `/news/${item.id}`
-                          );
+                          navigate(`/news/${item.id}`);
                         }
                       }}
                     />
                   </Tooltip>,
 
-                  // =========================
                   // DOWNLOAD
-                  // =========================
                   item.externalLink && (
-                    <Tooltip
-                      title="Tải xuống tài liệu"
-                      key="download"
-                    >
+                    <Tooltip title="Tải xuống tài liệu" key="download">
                       <DownloadOutlined
                         style={{
                           color: "#52c41a",
                           fontSize: 18,
+                          cursor: "pointer",
                         }}
                         onClick={() =>
-                          handleDownload(
-                            item.externalLink,
-                            item.title
-                          )
+                          handleDownload(item.externalLink, item.title)
                         }
                       />
                     </Tooltip>
@@ -486,20 +344,10 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
               >
                 {/* TAG */}
                 <Tag
-                  color={
-                    item.type ===
-                    "ANNOUNCEMENT"
-                      ? "volcano"
-                      : "blue"
-                  }
-                  style={{
-                    marginBottom: 12,
-                  }}
+                  color={item.type === "ANNOUNCEMENT" ? "volcano" : "blue"}
+                  style={{ marginBottom: 12 }}
                 >
-                  {item.type ===
-                  "ANNOUNCEMENT"
-                    ? "THÔNG BÁO"
-                    : "TIN TỨC"}
+                  {item.type === "ANNOUNCEMENT" ? "THÔNG BÁO" : "TIN TỨC"}
                 </Tag>
 
                 {/* META */}
@@ -509,11 +357,9 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                       strong
                       style={{
                         fontSize: 16,
-                        display:
-                          "-webkit-box",
+                        display: "-webkit-box",
                         WebkitLineClamp: 2,
-                        WebkitBoxOrient:
-                          "vertical",
+                        WebkitBoxOrient: "vertical",
                         overflow: "hidden",
                         minHeight: 48,
                       }}
@@ -525,35 +371,19 @@ const HomeNews: React.FC<HomeNewsProps> = ({ posts }) => {
                     <Space
                       direction="vertical"
                       size={4}
-                      style={{
-                        width: "100%",
-                      }}
+                      style={{ width: "100%" }}
                     >
                       <Paragraph
                         type="secondary"
-                        ellipsis={{
-                          rows: 2,
-                        }}
-                        style={{
-                          marginBottom: 8,
-                        }}
+                        ellipsis={{ rows: 2 }}
+                        style={{ marginBottom: 8 }}
                       >
-                        {item.content ||
-                          "Xem chi tiết..."}
+                        {item.content || "Xem chi tiết..."}
                       </Paragraph>
 
-                      <Text
-                        type="secondary"
-                        style={{
-                          fontSize: 12,
-                        }}
-                      >
+                      <Text type="secondary" style={{ fontSize: 12 }}>
                         <CalendarOutlined />{" "}
-                        {new Date(
-                          item.createdAt
-                        ).toLocaleDateString(
-                          "vi-VN"
-                        )}
+                        {new Date(item.createdAt).toLocaleDateString("vi-VN")}
                       </Text>
                     </Space>
                   }
