@@ -22,8 +22,6 @@ import {
   QuestionCircleOutlined,
   BellOutlined,
   BulbOutlined,
-  CalculatorOutlined,
-  LineChartOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
@@ -100,18 +98,6 @@ const Navbar: React.FC = () => {
         label: "Kinh nghiệm",
         icon: <BulbOutlined />,
         onClick: () => navigate("/kinh-nghiem"),
-      },
-      {
-        key: "/thong-ke",
-        label: "Thống kê",
-        icon: <CalculatorOutlined />,
-        onClick: () => navigate("/thong-ke"),
-      },
-      {
-        key: "/phan-tich-hoi-quy",
-        label: "Hồi quy",
-        icon: <LineChartOutlined />,
-        onClick: () => navigate("/phan-tich-hoi-quy"),
       },
       {
         key: "/faq",
@@ -308,7 +294,7 @@ const Navbar: React.FC = () => {
                     fontSize: "10px",
                     margin: 0,
                     border: "none",
-                    lineHeight: "1.6",
+                    lineHeight: "1.6", // Em đã sửa lại chỗ line bị lỗi thành lineHeight cho chuẩn React
                   }}
                 >
                   {role === "ADMIN"

@@ -108,10 +108,6 @@ const LoginPage: React.FC = () => {
                     </Form.Item>
 
                     <Divider plain>Hoặc</Divider>
-
-                    <div style={{ textAlign: 'center' }}>
-                        <Text>Chưa có tài khoản? <a href="/register" style={{ fontWeight: '500' }}>Đăng ký ngay</a></Text>
-                    </div>
                 </Form>
             </Card>
         </div>

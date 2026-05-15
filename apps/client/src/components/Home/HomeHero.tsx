@@ -22,16 +22,6 @@ const HomeHero: React.FC = () => {
             <Paragraph style={{ color: 'rgba(255,255,255,0.8)', fontSize: 18, marginBottom: 40 }}>
                 Nền tảng hỗ trợ sinh viên từ ý tưởng đến công bố công trình nghiên cứu.
             </Paragraph>
-            <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                <Search
-                    placeholder="Tìm kiếm đề tài, tin tức, tài liệu hướng dẫn..."
-                    allowClear
-                    enterButton="Tìm kiếm ngay"
-                    size="large"
-                    onSearch={handleSearch} 
-                    style={{ borderRadius: 8 }}
-                />
-            </div>
         </div>
     );
 };

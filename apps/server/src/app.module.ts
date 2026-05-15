@@ -19,7 +19,6 @@ import { RecruitmentModule } from './recruitment/recruitment.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { StatisticsModule } from './statistics/statistics.module';
-import { RegressionModule } from './regression/regression.module';
 import { FileProxyController } from './file-proxy.controller';
 @Module({
   imports: [
@@ -45,7 +44,6 @@ import { FileProxyController } from './file-proxy.controller';
     ChatModule,
     ChatbotModule,
     StatisticsModule,
-    RegressionModule,
   ],
   controllers: [AppController, FileProxyController],
   providers: [AppService],
